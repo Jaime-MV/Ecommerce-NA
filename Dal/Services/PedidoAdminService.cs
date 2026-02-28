@@ -77,10 +77,10 @@ namespace Ecommerce.Negocio.Services
                 Id = p.Id,
                 FechaCreacion = p.FechaPedido,
                 Estado = p.Estado,
-                UsuarioId = p.UsuarioId,
+                UsuarioId = string.Empty, // TODO: No implementado en la entidad aún
                 Total = p.Total,
                 CostoEnvio = p.CostoEnvioPagado,
-                DireccionEntrega = p.DireccionEnvio
+                DireccionEntrega = string.Empty // TODO: No implementado en la entidad aún
             };
         }
     }

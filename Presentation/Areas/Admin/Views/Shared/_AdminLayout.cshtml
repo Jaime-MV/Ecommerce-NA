@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Admin Panel</title>
+    <meta name="description" content="Panel de administración E-commerce NA — Gestión de calzado" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
+
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="admin-wrapper">
+        <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">NA</div>
+                <div>
+                    <div class="sidebar-title">Ecommerce NA</div>
+                    <div class="sidebar-subtitle">Panel Admin</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Principal</div>
+                <a class="nav-item @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")"
+                   href="/Admin/Dashboard" id="nav-dashboard">
+                    <span class="nav-item-icon"><i data-lucide="layout-dashboard"></i></span>
+                    Dashboard
+                </a>
+
+                <div class="nav-section-label" style="margin-top:14px;">Catálogo</div>
+                <a class="nav-item @(ViewData["ActivePage"]?.ToString() == "Categorias" ? "active" : "")"
+                   href="/Admin/Categorias/View" id="nav-categorias">
+                    <span class="nav-item-icon"><i data-lucide="layers"></i></span>
+                    Categorías
+                </a>
+                <a class="nav-item @(ViewData["ActivePage"]?.ToString() == "Productos" ? "active" : "")"
+                   href="/Admin/Productos/View" id="nav-productos">
+                    <span class="nav-item-icon"><i data-lucide="box"></i></span>
+                    Productos
+                </a>
+                <a class="nav-item @(ViewData["ActivePage"]?.ToString() == "Inventario" ? "active" : "")"
+                   href="/Admin/Inventario/View" id="nav-inventario">
+                    <span class="nav-item-icon"><i data-lucide="warehouse"></i></span>
+                    Inventario
+                </a>
+
+                <div class="nav-section-label" style="margin-top:14px;">Ventas</div>
+                <a class="nav-item @(ViewData["ActivePage"]?.ToString() == "Pedidos" ? "active" : "")"
+                   href="/Admin/Pedidos/View" id="nav-pedidos">
+                    <span class="nav-item-icon"><i data-lucide="shopping-cart"></i></span>
+                    Pedidos
+                    <span class="nav-item-badge" id="pedidosBadge" style="display:none;"></span>
+                </a>
+                <a class="nav-item @(ViewData["ActivePage"]?.ToString() == "Envios" ? "active" : "")"
+                   href="/Admin/Envios/View" id="nav-envios">
+                    <span class="nav-item-icon"><i data-lucide="truck"></i></span>
+                    Envíos
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-avatar">AD</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">Administrador</div>
+                    <div class="sidebar-user-role">Super Admin</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ═══════════════════════ MAIN ═══════════════════════ -->
+        <main class="admin-main">
+            <!-- Top Bar -->
+            <div class="admin-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Abrir menú">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="topbar-breadcrumb">
+                        <span class="breadcrumb-parent">Admin</span>
+                        <span class="breadcrumb-sep">/</span>
+                        <span class="breadcrumb-current">@ViewData["Title"]</span>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <button class="topbar-btn" title="Buscar" onclick="focusGlobalSearch()">
+                        <i data-lucide="search"></i>
+                    </button>
+                    <button class="topbar-btn" title="Notificaciones">
+                        <i data-lucide="bell"></i>
+                    </button>
+                    <button class="topbar-btn" title="Configuración">
+                        <i data-lucide="settings"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page Content -->
+            <div class="admin-content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Core Admin JS -->
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

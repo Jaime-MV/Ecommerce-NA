@@ -23,8 +23,7 @@ namespace Ecommerce.Datos.Context
 
             modelBuilder.Entity<ProductoVariante>()
                 .HasIndex(pv => new { pv.ProductoId, pv.Talla, pv.Color })
-                .IsUnique()
-                .HasDatabaseName("IX_ProductoVariante_UnicoTallaColor");
+                .IsUnique();
 
         }
     }

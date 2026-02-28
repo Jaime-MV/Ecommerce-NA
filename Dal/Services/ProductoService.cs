@@ -43,7 +43,7 @@ namespace Ecommerce.Negocio.Services
             var producto = new Producto
             {
                 Nombre = dto.Nombre,
-                SKU = dto.SKU,
+                Descripcion = dto.SKU,
                 PrecioBase = dto.PrecioBase,
                 CategoriaId = dto.CategoriaId,
                 ImagenUrl = dto.ImagenUrl
@@ -60,7 +60,7 @@ namespace Ecommerce.Negocio.Services
             if (producto == null) throw new KeyNotFoundException("Producto no encontrado");
 
             producto.Nombre = dto.Nombre;
-            producto.SKU = dto.SKU;
+            producto.Descripcion = dto.SKU;
             producto.PrecioBase = dto.PrecioBase;
             producto.CategoriaId = dto.CategoriaId;
             producto.ImagenUrl = dto.ImagenUrl;
@@ -100,7 +100,7 @@ namespace Ecommerce.Negocio.Services
             {
                 Id = p.Id,
                 Nombre = p.Nombre,
-                SKU = p.SKU,
+                SKU = p.Descripcion,
                 PrecioBase = p.PrecioBase,
                 ImagenUrl = p.ImagenUrl,
                 CategoriaId = p.CategoriaId,

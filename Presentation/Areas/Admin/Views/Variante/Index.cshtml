@@ -1,0 +1,296 @@
+@{
+    ViewData["Title"] = "Inventario";
+    ViewData["ActivePage"] = "Inventario";
+}
+
+<div class="page-header animate-fade-up">
+    <div>
+        <h1 class="page-title">Inventario</h1>
+        <p class="page-subtitle">Control de stock por talla y color para cada modelo</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn-admin btn-primary" onclick="openCreateModal()">
+            <i data-lucide="plus" style="width:16px;height:16px;"></i>
+            Nueva Variante
+        </button>
+    </div>
+</div>
+
+<!-- Product Selector -->
+<div class="table-card animate-fade-up" style="animation-delay:80ms; margin-bottom:20px;">
+    <div class="table-toolbar" style="border-bottom:none;">
+        <div class="table-toolbar-left" style="flex:1;">
+            <div class="form-group" style="margin:0; min-width:280px;">
+                <label class="form-label">Selecciona un producto</label>
+                <select class="form-input" id="productoSelector" onchange="loadVariantes()">
+                    <option value="">— Seleccionar producto —</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Variantes Table -->
+<div class="table-card animate-fade-up" style="animation-delay:160ms;" id="variantesCard">
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <h3 style="font-family:var(--font-display);font-size:1rem;font-weight:700;">
+                Variantes del producto
+            </h3>
+        </div>
+        <div class="table-toolbar-right">
+            <span class="cell-muted" style="font-size:0.82rem;" id="totalCount"></span>
+        </div>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Talla</th>
+                <th>Color</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="variantesBody">
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i data-lucide="warehouse"></i></div>
+                        <div class="empty-state-title">Selecciona un producto</div>
+                        <div class="empty-state-desc">Elige un producto arriba para ver y gestionar sus variantes de inventario.</div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Create Variante Modal -->
+<div class="modal-overlay" id="varianteModal">
+    <div class="modal-container" style="max-width:480px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Nueva Variante</h3>
+            <button class="modal-close" onclick="closeModal('varianteModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="varianteForm" onsubmit="handleCreateVariante(event)">
+                <div class="form-group">
+                    <label class="form-label">Producto</label>
+                    <select class="form-input" id="varianteProductoId" required>
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="talla">Talla *</label>
+                        <input type="text" class="form-input" id="talla" placeholder="Ej: 42, 38, M..." required maxlength="20" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="color">Color *</label>
+                        <input type="text" class="form-input" id="color" placeholder="Ej: Negro, Rojo..." required maxlength="50" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="stock">Stock inicial *</label>
+                    <input type="number" class="form-input" id="stock" placeholder="0" required min="0" />
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('varianteModal')">Cancelar</button>
+            <button class="btn-admin btn-primary" onclick="document.getElementById('varianteForm').requestSubmit()">
+                <i data-lucide="save" style="width:15px;height:15px;"></i> Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Stock Modal -->
+<div class="modal-overlay" id="stockModal">
+    <div class="modal-container" style="max-width:400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Actualizar Stock</h3>
+            <button class="modal-close" onclick="closeModal('stockModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="stockVarianteId" />
+            <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;" id="stockInfo"></p>
+            <div class="form-group">
+                <label class="form-label" for="nuevoStock">Nuevo stock</label>
+                <input type="number" class="form-input" id="nuevoStock" placeholder="0" min="0" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('stockModal')">Cancelar</button>
+            <button class="btn-admin btn-primary" onclick="updateStock()">
+                <i data-lucide="refresh-cw" style="width:15px;height:15px;"></i> Actualizar
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allProductos = [];
+let currentVariantes = [];
+
+document.addEventListener('DOMContentLoaded', () => loadProductos());
+
+async function loadProductos() {
+    try {
+        allProductos = await apiGet('productos');
+        const options = allProductos.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+        document.getElementById('productoSelector').innerHTML = '<option value="">— Seleccionar producto —</option>' + options;
+        document.getElementById('varianteProductoId').innerHTML = '<option value="">Seleccionar...</option>' + options;
+    } catch (e) {
+        showToast('Error al cargar productos: ' + e.message, 'error');
+    }
+}
+
+async function loadVariantes() {
+    const productoId = document.getElementById('productoSelector').value;
+    if (!productoId) {
+        document.getElementById('variantesBody').innerHTML = `
+            <tr><td colspan="6"><div class="empty-state">
+                <div class="empty-state-icon"><i data-lucide="warehouse"></i></div>
+                <div class="empty-state-title">Selecciona un producto</div>
+                <div class="empty-state-desc">Elige un producto para gestionar su inventario.</div>
+            </div></td></tr>`;
+        lucide.createIcons();
+        return;
+    }
+
+    showTableSkeleton('variantesBody', 6);
+    try {
+        currentVariantes = await apiGet(`productos/${productoId}/variantes`);
+        renderVariantes();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function renderVariantes() {
+    const tbody = document.getElementById('variantesBody');
+    document.getElementById('totalCount').textContent = `${currentVariantes.length} variante${currentVariantes.length !== 1 ? 's' : ''}`;
+
+    if (!currentVariantes.length) {
+        showEmptyState('variantesBody', 'package-open', 'Sin variantes', 'Este producto no tiene variantes registradas.',
+            '<button class="btn-admin btn-primary btn-sm" onclick="openCreateModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Agregar</button>');
+        return;
+    }
+
+    tbody.innerHTML = currentVariantes.map(v => {
+        const stockClass = v.stock === 0 ? 'badge--danger' : (v.stock <= 5 ? 'badge--warning' : 'badge--success');
+        const stockLabel = v.stock === 0 ? 'Agotado' : (v.stock <= 5 ? 'Bajo' : 'Disponible');
+        return `
+        <tr>
+            <td class="cell-muted">#${v.id}</td>
+            <td class="cell-bold">${esc(v.talla)}</td>
+            <td>
+                <div class="variant-tag">
+                    <span class="variant-color-dot" style="background:${getColorHex(v.color)};"></span>
+                    ${esc(v.color)}
+                </div>
+            </td>
+            <td class="cell-bold">${v.stock}</td>
+            <td>
+                <span class="badge ${stockClass}"><span class="badge-dot"></span>${stockLabel}</span>
+                ${!v.activo ? '<span class="badge badge--neutral" style="margin-left:4px;">Inactivo</span>' : ''}
+            </td>
+            <td>
+                <div class="cell-actions">
+                    <button class="btn-admin btn-ghost btn-icon" title="Editar stock" onclick="openStockModal(${v.id}, '${esc(v.talla)}', '${esc(v.color)}', ${v.stock})">
+                        <i data-lucide="pencil" style="width:15px;height:15px;"></i>
+                    </button>
+                    <button class="btn-admin btn-danger btn-icon" title="Desactivar" onclick="confirmDesactivar(${v.id}, '${esc(v.talla)}', '${esc(v.color)}')">
+                        <i data-lucide="power-off" style="width:15px;height:15px;"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `}).join('');
+    lucide.createIcons();
+}
+
+function openCreateModal() {
+    const selProd = document.getElementById('productoSelector').value;
+    if (selProd) document.getElementById('varianteProductoId').value = selProd;
+    document.getElementById('talla').value = '';
+    document.getElementById('color').value = '';
+    document.getElementById('stock').value = '';
+    openModal('varianteModal');
+}
+
+async function handleCreateVariante(e) {
+    e.preventDefault();
+    const data = {
+        productoId: parseInt(document.getElementById('varianteProductoId').value),
+        talla: document.getElementById('talla').value.trim(),
+        color: document.getElementById('color').value.trim(),
+        stock: parseInt(document.getElementById('stock').value)
+    };
+    try {
+        await apiPost('variantes', data);
+        showToast('Variante creada correctamente', 'success');
+        closeModal('varianteModal');
+        document.getElementById('productoSelector').value = data.productoId;
+        await loadVariantes();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function openStockModal(id, talla, color, stock) {
+    document.getElementById('stockVarianteId').value = id;
+    document.getElementById('stockInfo').innerHTML = `Talla: <strong>${talla}</strong> — Color: <strong>${color}</strong> — Stock actual: <strong>${stock}</strong>`;
+    document.getElementById('nuevoStock').value = stock;
+    openModal('stockModal');
+}
+
+async function updateStock() {
+    const id = document.getElementById('stockVarianteId').value;
+    const nuevoStock = parseInt(document.getElementById('nuevoStock').value);
+    try {
+        await apiPatch(`variantes/${id}/stock`, nuevoStock);
+        showToast('Stock actualizado', 'success');
+        closeModal('stockModal');
+        await loadVariantes();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function confirmDesactivar(id, talla, color) {
+    showConfirm('Desactivar Variante',
+        `¿Seguro que deseas desactivar la variante <strong class="confirm-strong">Talla ${talla} / ${color}</strong>?`,
+        async () => {
+            try {
+                await apiDelete(`variantes/${id}`);
+                showToast('Variante desactivada', 'success');
+                await loadVariantes();
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        },
+        { danger: true, confirmText: 'Desactivar' }
+    );
+}
+
+function getColorHex(colorName) {
+    const colors = {
+        'negro': '#1a1a1a', 'blanco': '#f5f5f5', 'rojo': '#ef4444', 'azul': '#3b82f6',
+        'verde': '#22c55e', 'amarillo': '#eab308', 'naranja': '#f97316', 'morado': '#a855f7',
+        'rosa': '#ec4899', 'café': '#92400e', 'gris': '#6b7280', 'marrón': '#92400e',
+        'beige': '#d4a574', 'dorado': '#d4a520'
+    };
+    return colors[colorName.toLowerCase()] || '#6b697a';
+}
+
+function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+</script>
+}
