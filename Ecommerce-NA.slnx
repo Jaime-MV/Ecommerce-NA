@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Ecommerce.Datos/Ecommerce.Datos.csproj" />
-  <Project Path="Ecommerce.Negocio/Ecommerce.Negocio.csproj" />
-  <Project Path="Ecommerce.Presentacion/Ecommerce.Presentacion.csproj" />
+  <Project Path="Data/Ecommerce.Datos.csproj" />
+  <Project Path="Dal/Ecommerce.Negocio.csproj" />
+  <Project Path="Presentation/Ecommerce.Presentacion.csproj" />
 </Solution>
