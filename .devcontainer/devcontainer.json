@@ -1,0 +1,30 @@
+{
+    "name": "Ecommerce-NA Dev Environment",
+    "image": "mcr.microsoft.com/dotnet/sdk:10.0",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": false,
+            "configureZshAsDefaultShell": false,
+            "installOhMyZsh": false,
+            "upgradePackages": true
+        }
+    },
+    "forwardPorts": [
+        5270,
+        7084
+    ],
+    "postCreateCommand": "dotnet restore Presentation/Ecommerce.Presentacion.csproj",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
+                "ms-dotnettools.vscode-dotnet-runtime"
+            ],
+            "settings": {
+                "dotnet.defaultSolution": "Ecommerce-NA.slnx"
+            }
+        }
+    },
+    "remoteUser": "vscode"
+}
