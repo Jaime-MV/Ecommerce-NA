@@ -1,0 +1,113 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActivePage"] = "Dashboard";
+}
+
+<!-- Stats Cards -->
+<div class="stats-grid animate-fade-up">
+    <div class="stat-card stat-card--amber">
+        <div class="stat-icon"><i data-lucide="box"></i></div>
+        <div class="stat-value" id="totalProductos">—</div>
+        <div class="stat-label">Productos activos</div>
+        <div class="stat-change stat-change--up">
+            <i data-lucide="trending-up" style="width:13px;height:13px;"></i> +12%
+        </div>
+    </div>
+    <div class="stat-card stat-card--green">
+        <div class="stat-icon"><i data-lucide="shopping-cart"></i></div>
+        <div class="stat-value" id="totalPedidos">—</div>
+        <div class="stat-label">Pedidos este mes</div>
+        <div class="stat-change stat-change--up">
+            <i data-lucide="trending-up" style="width:13px;height:13px;"></i> +8%
+        </div>
+    </div>
+    <div class="stat-card stat-card--blue">
+        <div class="stat-icon"><i data-lucide="layers"></i></div>
+        <div class="stat-value" id="totalCategorias">—</div>
+        <div class="stat-label">Categorías</div>
+    </div>
+    <div class="stat-card stat-card--red">
+        <div class="stat-icon"><i data-lucide="alert-triangle"></i></div>
+        <div class="stat-value" id="stockBajo">—</div>
+        <div class="stat-label">Stock bajo</div>
+        <div class="stat-change stat-change--down">
+            <i data-lucide="trending-down" style="width:13px;height:13px;"></i> Atención
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="table-card animate-fade-up" style="animation-delay:200ms;">
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <h3 style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;">Pedidos Recientes</h3>
+        </div>
+        <div class="table-toolbar-right">
+            <a href="/Admin/Pedidos/View" class="btn-admin btn-ghost btn-sm">
+                Ver todos <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+            </a>
+        </div>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID Pedido</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Envío</th>
+            </tr>
+        </thead>
+        <tbody id="recentOrdersBody">
+            <!-- Loaded via JS -->
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Load stats
+        const [categorias, productos, pedidos] = await Promise.allSettled([
+            apiGet('categorias'),
+            apiGet('productos'),
+            apiGet('pedidos')
+        ]);
+
+        if (categorias.status === 'fulfilled') {
+            document.getElementById('totalCategorias').textContent = categorias.value.length;
+        }
+        if (productos.status === 'fulfilled') {
+            document.getElementById('totalProductos').textContent = productos.value.length;
+        }
+        if (pedidos.status === 'fulfilled') {
+            document.getElementById('totalPedidos').textContent = pedidos.value.length;
+            renderRecentOrders(pedidos.value.slice(0, 5));
+        }
+
+        // Stock bajo is simulated for now
+        document.getElementById('stockBajo').textContent = '3';
+    } catch (e) {
+        console.error('Dashboard load error:', e);
+    }
+});
+
+function renderRecentOrders(orders) {
+    const tbody = document.getElementById('recentOrdersBody');
+    if (!orders.length) {
+        showEmptyState('recentOrdersBody', 'inbox', 'Sin pedidos', 'No hay pedidos registrados aún.');
+        return;
+    }
+    tbody.innerHTML = orders.map(o => `
+        <tr>
+            <td class="cell-bold">#${o.id}</td>
+            <td class="cell-muted">${formatDate(o.fechaCreacion)}</td>
+            <td><span class="badge status-${o.estado.toLowerCase()}"><span class="badge-dot"></span>${o.estado}</span></td>
+            <td class="cell-bold">${formatCurrency(o.total)}</td>
+            <td class="cell-muted">${formatCurrency(o.costoEnvio)}</td>
+        </tr>
+    `).join('');
+}
+</script>
+}

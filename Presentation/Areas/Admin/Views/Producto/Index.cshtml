@@ -1,0 +1,321 @@
+@{
+    ViewData["Title"] = "Productos";
+    ViewData["ActivePage"] = "Productos";
+}
+
+<div class="page-header animate-fade-up">
+    <div>
+        <h1 class="page-title">Productos</h1>
+        <p class="page-subtitle">Catálogo maestro de tu colección de calzado</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn-admin btn-primary" onclick="openCreateModal()">
+            <i data-lucide="plus" style="width:16px;height:16px;"></i>
+            Nuevo Producto
+        </button>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="table-card animate-fade-up" style="animation-delay:100ms;">
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <div class="search-input-wrapper">
+                <span class="search-icon"><i data-lucide="search" style="width:15px;height:15px;"></i></span>
+                <input type="text" class="search-input" placeholder="Buscar producto..." id="searchProducto" oninput="filterTable()" />
+            </div>
+            <select class="filter-select" id="filterCategoria" onchange="filterTable()">
+                <option value="">Todas las categorías</option>
+            </select>
+        </div>
+        <div class="table-toolbar-right">
+            <span class="cell-muted" style="font-size:0.82rem;" id="totalCount"></span>
+        </div>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Precio Base</th>
+                <th>Descuento</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="productosBody">
+        </tbody>
+    </table>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal-overlay" id="productoModal">
+    <div class="modal-container" style="max-width:600px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Nuevo Producto</h3>
+            <button class="modal-close" onclick="closeModal('productoModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="productoForm" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="productoId" />
+                <div class="form-group">
+                    <label class="form-label" for="nombre">Nombre del producto *</label>
+                    <input type="text" class="form-input" id="nombre" placeholder="Ej: Nike Air Max 90..." required maxlength="150" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="sku">SKU</label>
+                        <input type="text" class="form-input" id="sku" placeholder="SKU-001" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="categoriaId">Categoría *</label>
+                        <select class="form-input" id="categoriaId" required>
+                            <option value="">Seleccionar...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="precioBase">Precio Base (C$) *</label>
+                        <input type="number" class="form-input" id="precioBase" placeholder="0.00" required step="0.01" min="0" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="imagenUrl">URL de Imagen</label>
+                        <input type="url" class="form-input" id="imagenUrl" placeholder="https://..." />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('productoModal')">Cancelar</button>
+            <button class="btn-admin btn-primary" onclick="document.getElementById('productoForm').requestSubmit()" id="submitBtn">
+                <i data-lucide="save" style="width:15px;height:15px;"></i> Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Descuento Modal -->
+<div class="modal-overlay" id="descuentoModal">
+    <div class="modal-container" style="max-width:400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Aplicar Descuento</h3>
+            <button class="modal-close" onclick="closeModal('descuentoModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="descuentoProductoId" />
+            <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;">
+                Producto: <strong id="descuentoProductoName" class="confirm-strong"></strong>
+            </p>
+            <div class="form-group">
+                <label class="form-label" for="porcentajeDescuento">Porcentaje de descuento (%)</label>
+                <input type="number" class="form-input" id="porcentajeDescuento" placeholder="0" min="0" max="100" />
+                <div class="form-hint">Ingresa un valor entre 0 y 100. Usa 0 para quitar el descuento.</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('descuentoModal')">Cancelar</button>
+            <button class="btn-admin btn-success" onclick="applyDiscount()">
+                <i data-lucide="percent" style="width:15px;height:15px;"></i> Aplicar
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allProductos = [];
+let allCategorias = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+});
+
+async function loadData() {
+    showTableSkeleton('productosBody', 5);
+    try {
+        const [productos, categorias] = await Promise.all([
+            apiGet('productos'),
+            apiGet('categorias')
+        ]);
+        allProductos = productos;
+        allCategorias = categorias;
+        populateCategorySelects();
+        renderTable(allProductos);
+    } catch (e) {
+        showToast('Error al cargar datos: ' + e.message, 'error');
+    }
+}
+
+function populateCategorySelects() {
+    const filterSel = document.getElementById('filterCategoria');
+    const formSel = document.getElementById('categoriaId');
+    // Filter select
+    filterSel.innerHTML = '<option value="">Todas las categorías</option>' +
+        allCategorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+    // Form select
+    formSel.innerHTML = '<option value="">Seleccionar...</option>' +
+        allCategorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('productosBody');
+    document.getElementById('totalCount').textContent = `${data.length} producto${data.length !== 1 ? 's' : ''}`;
+
+    if (!data.length) {
+        showEmptyState('productosBody', 'box', 'Sin productos', 'Agrega tu primer producto al catálogo.',
+            '<button class="btn-admin btn-primary btn-sm" onclick="openCreateModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Nuevo Producto</button>');
+        return;
+    }
+
+    tbody.innerHTML = data.map(p => {
+        const hasDiscount = p.porcentajeDescuento > 0;
+        const discountedPrice = p.precioBase * (1 - p.porcentajeDescuento / 100);
+        return `
+        <tr>
+            <td>
+                <div class="product-cell">
+                    ${p.imagenUrl
+                        ? `<img src="${esc(p.imagenUrl)}" class="product-thumb" alt="${esc(p.nombre)}" onerror="this.style.display='none'" />`
+                        : `<div class="product-thumb flex-center" style="font-size:1.1rem;color:var(--text-muted);"><i data-lucide="image" style="width:18px;height:18px;"></i></div>`
+                    }
+                    <div class="product-cell-info">
+                        <span class="product-cell-name">${esc(p.nombre)}</span>
+                        ${p.sku ? `<span class="product-cell-sku">${esc(p.sku)}</span>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge badge--neutral">${esc(p.categoriaNombre || '—')}</span>
+            </td>
+            <td>
+                ${hasDiscount
+                    ? `<span class="price-original">${formatCurrency(p.precioBase)}</span><br/><span class="price-discount">${formatCurrency(discountedPrice)}</span>`
+                    : `<span class="cell-bold">${formatCurrency(p.precioBase)}</span>`
+                }
+            </td>
+            <td>
+                ${hasDiscount
+                    ? `<span class="badge badge--success"><i data-lucide="percent" style="width:11px;height:11px;"></i> ${p.porcentajeDescuento}%</span>`
+                    : `<span class="text-muted">—</span>`
+                }
+            </td>
+            <td>
+                <div class="cell-actions">
+                    <button class="btn-admin btn-ghost btn-icon" title="Descuento" onclick="openDescuentoModal(${p.id}, '${esc(p.nombre)}', ${p.porcentajeDescuento})">
+                        <i data-lucide="percent" style="width:15px;height:15px;"></i>
+                    </button>
+                    <button class="btn-admin btn-ghost btn-icon" title="Editar" onclick="openEditModal(${p.id})">
+                        <i data-lucide="pencil" style="width:15px;height:15px;"></i>
+                    </button>
+                    <button class="btn-admin btn-danger btn-icon" title="Eliminar" onclick="confirmDelete(${p.id}, '${esc(p.nombre)}')">
+                        <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `}).join('');
+    lucide.createIcons();
+}
+
+function filterTable() {
+    const q = document.getElementById('searchProducto').value.toLowerCase();
+    const catFilter = document.getElementById('filterCategoria').value;
+    const filtered = allProductos.filter(p => {
+        const matchText = p.nombre.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
+        const matchCat = !catFilter || p.categoriaId == catFilter;
+        return matchText && matchCat;
+    });
+    renderTable(filtered);
+}
+
+function openCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+    document.getElementById('productoId').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('sku').value = '';
+    document.getElementById('categoriaId').value = '';
+    document.getElementById('precioBase').value = '';
+    document.getElementById('imagenUrl').value = '';
+    openModal('productoModal');
+}
+
+function openEditModal(id) {
+    const p = allProductos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('modalTitle').textContent = 'Editar Producto';
+    document.getElementById('productoId').value = p.id;
+    document.getElementById('nombre').value = p.nombre;
+    document.getElementById('sku').value = p.sku || '';
+    document.getElementById('categoriaId').value = p.categoriaId;
+    document.getElementById('precioBase').value = p.precioBase;
+    document.getElementById('imagenUrl').value = p.imagenUrl || '';
+    openModal('productoModal');
+}
+
+async function handleSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('productoId').value;
+    const data = {
+        nombre: document.getElementById('nombre').value.trim(),
+        sku: document.getElementById('sku').value.trim(),
+        categoriaId: parseInt(document.getElementById('categoriaId').value),
+        precioBase: parseFloat(document.getElementById('precioBase').value),
+        imagenUrl: document.getElementById('imagenUrl').value.trim() || null
+    };
+    try {
+        if (id) {
+            await apiPut(`productos/${id}`, data);
+            showToast('Producto actualizado correctamente', 'success');
+        } else {
+            await apiPost('productos', data);
+            showToast('Producto creado correctamente', 'success');
+        }
+        closeModal('productoModal');
+        await loadData();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function openDescuentoModal(id, nombre, current) {
+    document.getElementById('descuentoProductoId').value = id;
+    document.getElementById('descuentoProductoName').textContent = nombre;
+    document.getElementById('porcentajeDescuento').value = current;
+    openModal('descuentoModal');
+}
+
+async function applyDiscount() {
+    const id = document.getElementById('descuentoProductoId').value;
+    const pct = parseInt(document.getElementById('porcentajeDescuento').value);
+    try {
+        await apiPatch(`productos/${id}/descuento`, pct);
+        showToast(`Descuento de ${pct}% aplicado correctamente`, 'success');
+        closeModal('descuentoModal');
+        await loadData();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function confirmDelete(id, nombre) {
+    showConfirm('Eliminar Producto',
+        `¿Seguro que deseas eliminar <strong class="confirm-strong">"${nombre}"</strong>? Se eliminarán también sus variantes.`,
+        async () => {
+            try {
+                await apiDelete(`productos/${id}`);
+                showToast('Producto eliminado', 'success');
+                await loadData();
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        },
+        { danger: true, confirmText: 'Eliminar' }
+    );
+}
+
+function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+</script>
+}

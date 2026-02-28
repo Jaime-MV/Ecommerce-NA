@@ -1,0 +1,259 @@
+@{
+    ViewData["Title"] = "Pedidos";
+    ViewData["ActivePage"] = "Pedidos";
+}
+
+<div class="page-header animate-fade-up">
+    <div>
+        <h1 class="page-title">Pedidos</h1>
+        <p class="page-subtitle">Visualiza las ventas y gestiona el flujo de estados</p>
+    </div>
+</div>
+
+<!-- Tabs for status filter -->
+<div class="tab-bar animate-fade-up" style="animation-delay:80ms;">
+    <button class="tab-item active" onclick="filterByStatus('', this)">Todos</button>
+    <button class="tab-item" onclick="filterByStatus('Creado', this)">Creados</button>
+    <button class="tab-item" onclick="filterByStatus('Pagado', this)">Pagados</button>
+    <button class="tab-item" onclick="filterByStatus('Enviado', this)">Enviados</button>
+    <button class="tab-item" onclick="filterByStatus('Completado', this)">Completados</button>
+    <button class="tab-item" onclick="filterByStatus('Cancelado', this)">Cancelados</button>
+</div>
+
+<!-- Data Table -->
+<div class="table-card animate-fade-up" style="animation-delay:160ms;">
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <div class="search-input-wrapper">
+                <span class="search-icon"><i data-lucide="search" style="width:15px;height:15px;"></i></span>
+                <input type="text" class="search-input" placeholder="Buscar por ID..." id="searchPedido" oninput="filterTable()" />
+            </div>
+        </div>
+        <div class="table-toolbar-right">
+            <span class="cell-muted" style="font-size:0.82rem;" id="totalCount"></span>
+        </div>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Pedido</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Costo Envío</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="pedidosBody">
+        </tbody>
+    </table>
+</div>
+
+<!-- Change Status Modal -->
+<div class="modal-overlay" id="estadoModal">
+    <div class="modal-container" style="max-width:440px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Cambiar Estado</h3>
+            <button class="modal-close" onclick="closeModal('estadoModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="estadoPedidoId" />
+            <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:8px;">
+                Pedido: <strong id="estadoPedidoLabel" class="confirm-strong"></strong>
+            </p>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">
+                Estado actual: <span id="estadoActual" class="badge"></span>
+            </p>
+            <div class="form-group">
+                <label class="form-label">Nuevo estado</label>
+                <select class="form-input" id="nuevoEstado">
+                    <option value="Creado">Creado</option>
+                    <option value="Pagado">Pagado</option>
+                    <option value="Enviado">Enviado</option>
+                    <option value="Completado">Completado</option>
+                </select>
+                <div class="form-hint">Flujo: Creado → Pagado → Enviado → Completado</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('estadoModal')">Cancelar</button>
+            <button class="btn-admin btn-primary" onclick="changeEstado()">
+                <i data-lucide="check" style="width:15px;height:15px;"></i> Cambiar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detalleModal">
+    <div class="modal-container" style="max-width:540px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="detalleTitulo">Detalle del Pedido</h3>
+            <button class="modal-close" onclick="closeModal('detalleModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body" id="detalleBody">
+            <!-- Loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('detalleModal')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allPedidos = [];
+let currentFilter = '';
+
+document.addEventListener('DOMContentLoaded', () => loadPedidos());
+
+async function loadPedidos() {
+    showTableSkeleton('pedidosBody', 6);
+    try {
+        allPedidos = await apiGet('pedidos');
+        applyFilters();
+    } catch (e) {
+        showToast('Error al cargar pedidos: ' + e.message, 'error');
+    }
+}
+
+function filterByStatus(status, btn) {
+    currentFilter = status;
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    applyFilters();
+}
+
+function filterTable() {
+    applyFilters();
+}
+
+function applyFilters() {
+    const q = document.getElementById('searchPedido').value.toLowerCase();
+    const filtered = allPedidos.filter(p => {
+        const matchStatus = !currentFilter || p.estado === currentFilter;
+        const matchSearch = !q || p.id.toString().includes(q);
+        return matchStatus && matchSearch;
+    });
+    renderTable(filtered);
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('pedidosBody');
+    document.getElementById('totalCount').textContent = `${data.length} pedido${data.length !== 1 ? 's' : ''}`;
+
+    if (!data.length) {
+        showEmptyState('pedidosBody', 'inbox', 'Sin pedidos', 'No se encontraron pedidos con los filtros actuales.');
+        return;
+    }
+
+    tbody.innerHTML = data.map(p => `
+        <tr>
+            <td class="cell-bold">#${p.id}</td>
+            <td class="cell-muted">${formatDateShort(p.fechaCreacion)}</td>
+            <td>
+                <span class="badge status-${p.estado.toLowerCase()}">
+                    <span class="badge-dot"></span>${p.estado}
+                </span>
+            </td>
+            <td class="cell-bold">${formatCurrency(p.total)}</td>
+            <td class="cell-muted">${formatCurrency(p.costoEnvio)}</td>
+            <td>
+                <div class="cell-actions">
+                    <button class="btn-admin btn-ghost btn-icon" title="Ver detalle" onclick="viewDetail(${p.id})">
+                        <i data-lucide="eye" style="width:15px;height:15px;"></i>
+                    </button>
+                    ${p.estado !== 'Cancelado' && p.estado !== 'Completado' ? `
+                    <button class="btn-admin btn-ghost btn-icon" title="Cambiar estado" onclick="openEstadoModal(${p.id}, '${p.estado}')">
+                        <i data-lucide="arrow-right-circle" style="width:15px;height:15px;"></i>
+                    </button>
+                    <button class="btn-admin btn-danger btn-icon" title="Cancelar" onclick="confirmCancel(${p.id})">
+                        <i data-lucide="x-circle" style="width:15px;height:15px;"></i>
+                    </button>
+                    ` : ''}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    lucide.createIcons();
+}
+
+function openEstadoModal(id, estadoActual) {
+    document.getElementById('estadoPedidoId').value = id;
+    document.getElementById('estadoPedidoLabel').textContent = `#${id}`;
+    document.getElementById('estadoActual').className = `badge status-${estadoActual.toLowerCase()}`;
+    document.getElementById('estadoActual').innerHTML = `<span class="badge-dot"></span>${estadoActual}`;
+
+    // Set next logical state
+    const nextStates = { 'Creado': 'Pagado', 'Pagado': 'Enviado', 'Enviado': 'Completado' };
+    document.getElementById('nuevoEstado').value = nextStates[estadoActual] || 'Pagado';
+    openModal('estadoModal');
+}
+
+async function changeEstado() {
+    const id = document.getElementById('estadoPedidoId').value;
+    const nuevoEstado = document.getElementById('nuevoEstado').value;
+    try {
+        await apiPatch(`pedidos/${id}/estado`, nuevoEstado);
+        showToast(`Estado actualizado a "${nuevoEstado}"`, 'success');
+        closeModal('estadoModal');
+        await loadPedidos();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function confirmCancel(id) {
+    showConfirm('Cancelar Pedido',
+        `¿Seguro que deseas cancelar el pedido <strong class="confirm-strong">#${id}</strong>? Se devolverá el stock a las variantes.`,
+        async () => {
+            try {
+                await apiPost(`pedidos/${id}/cancelar`, {});
+                showToast('Pedido cancelado y stock devuelto', 'success');
+                await loadPedidos();
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        },
+        { danger: true, confirmText: 'Cancelar Pedido' }
+    );
+}
+
+async function viewDetail(id) {
+    document.getElementById('detalleTitulo').textContent = `Pedido #${id}`;
+    document.getElementById('detalleBody').innerHTML = '<div class="flex-center" style="padding:24px;"><div class="skeleton skeleton-line--long" style="height:16px;width:200px;"></div></div>';
+    openModal('detalleModal');
+    try {
+        const pedido = await apiGet(`pedidos/${id}`);
+        document.getElementById('detalleBody').innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <div class="form-label">ID Pedido</div>
+                    <div class="cell-bold">#${pedido.id}</div>
+                </div>
+                <div>
+                    <div class="form-label">Fecha</div>
+                    <div>${formatDate(pedido.fechaCreacion)}</div>
+                </div>
+                <div>
+                    <div class="form-label">Estado</div>
+                    <span class="badge status-${pedido.estado.toLowerCase()}"><span class="badge-dot"></span>${pedido.estado}</span>
+                </div>
+                <div>
+                    <div class="form-label">Total</div>
+                    <div class="cell-bold" style="font-size:1.1rem;">${formatCurrency(pedido.total)}</div>
+                </div>
+                <div>
+                    <div class="form-label">Costo de Envío</div>
+                    <div>${formatCurrency(pedido.costoEnvio)}</div>
+                </div>
+                <div>
+                    <div class="form-label">Dirección</div>
+                    <div class="cell-muted">${pedido.direccionEntrega || '—'}</div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        document.getElementById('detalleBody').innerHTML = `<p class="text-danger">Error al cargar detalle: ${e.message}</p>`;
+    }
+}
+</script>
+}

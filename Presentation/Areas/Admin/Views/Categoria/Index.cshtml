@@ -1,0 +1,200 @@
+@{
+    ViewData["Title"] = "Categorías";
+    ViewData["ActivePage"] = "Categorias";
+}
+
+<div class="page-header animate-fade-up">
+    <div>
+        <h1 class="page-title">Categorías</h1>
+        <p class="page-subtitle">Administra las agrupaciones principales de tu catálogo de calzado</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn-admin btn-primary" onclick="openCreateModal()">
+            <i data-lucide="plus" style="width:16px;height:16px;"></i>
+            Nueva Categoría
+        </button>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="table-card animate-fade-up" style="animation-delay:100ms;">
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <div class="search-input-wrapper">
+                <span class="search-icon"><i data-lucide="search" style="width:15px;height:15px;"></i></span>
+                <input type="text" class="search-input" placeholder="Buscar categoría..." id="searchCategoria" oninput="filterTable()" />
+            </div>
+        </div>
+        <div class="table-toolbar-right">
+            <span class="cell-muted" style="font-size:0.82rem;" id="totalCount"></span>
+        </div>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="categoriasBody">
+            <!-- Loaded via JS -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal-overlay" id="categoriaModal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Nueva Categoría</h3>
+            <button class="modal-close" onclick="closeModal('categoriaModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="categoriaForm" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="categoriaId" />
+                <div class="form-group">
+                    <label class="form-label" for="nombre">Nombre *</label>
+                    <input type="text" class="form-input" id="nombre" placeholder="Ej: Sandalias, Botas, Deportivos..." required maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="descripcion">Descripción</label>
+                    <textarea class="form-textarea" id="descripcion" placeholder="Descripción opcional de la categoría..." rows="3"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('categoriaModal')">Cancelar</button>
+            <button class="btn-admin btn-primary" onclick="document.getElementById('categoriaForm').requestSubmit()" id="submitBtn">
+                <i data-lucide="save" style="width:15px;height:15px;"></i>
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allCategorias = [];
+
+document.addEventListener('DOMContentLoaded', () => loadCategorias());
+
+async function loadCategorias() {
+    showTableSkeleton('categoriasBody', 4);
+    try {
+        allCategorias = await apiGet('categorias');
+        renderTable(allCategorias);
+    } catch (e) {
+        showToast('Error al cargar categorías: ' + e.message, 'error');
+        showEmptyState('categoriasBody', 'alert-circle', 'Error de carga', 'No se pudieron cargar las categorías.');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('categoriasBody');
+    document.getElementById('totalCount').textContent = `${data.length} categoría${data.length !== 1 ? 's' : ''}`;
+
+    if (!data.length) {
+        showEmptyState('categoriasBody', 'layers', 'Sin categorías', 'Crea tu primera categoría para organizar tu catálogo.',
+            '<button class="btn-admin btn-primary btn-sm" onclick="openCreateModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Nueva Categoría</button>');
+        return;
+    }
+
+    tbody.innerHTML = data.map(c => `
+        <tr>
+            <td class="cell-muted">#${c.id}</td>
+            <td class="cell-bold">${escapeHtml(c.nombre)}</td>
+            <td class="cell-muted">${c.descripcion ? escapeHtml(c.descripcion) : '<span class="text-muted">—</span>'}</td>
+            <td>
+                <div class="cell-actions">
+                    <button class="btn-admin btn-ghost btn-icon" title="Editar" onclick="openEditModal(${c.id})">
+                        <i data-lucide="pencil" style="width:15px;height:15px;"></i>
+                    </button>
+                    <button class="btn-admin btn-danger btn-icon" title="Eliminar" onclick="confirmDelete(${c.id}, '${escapeHtml(c.nombre)}')">
+                        <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    lucide.createIcons();
+}
+
+function filterTable() {
+    const q = document.getElementById('searchCategoria').value.toLowerCase();
+    const filtered = allCategorias.filter(c =>
+        c.nombre.toLowerCase().includes(q) || (c.descripcion && c.descripcion.toLowerCase().includes(q))
+    );
+    renderTable(filtered);
+}
+
+function openCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Nueva Categoría';
+    document.getElementById('categoriaId').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('submitBtn').innerHTML = '<i data-lucide="save" style="width:15px;height:15px;"></i> Guardar';
+    openModal('categoriaModal');
+    lucide.createIcons();
+}
+
+function openEditModal(id) {
+    const cat = allCategorias.find(c => c.id === id);
+    if (!cat) return;
+    document.getElementById('modalTitle').textContent = 'Editar Categoría';
+    document.getElementById('categoriaId').value = cat.id;
+    document.getElementById('nombre').value = cat.nombre;
+    document.getElementById('descripcion').value = cat.descripcion || '';
+    document.getElementById('submitBtn').innerHTML = '<i data-lucide="save" style="width:15px;height:15px;"></i> Actualizar';
+    openModal('categoriaModal');
+    lucide.createIcons();
+}
+
+async function handleSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('categoriaId').value;
+    const data = {
+        nombre: document.getElementById('nombre').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim() || null
+    };
+
+    try {
+        if (id) {
+            await apiPut(`categorias/${id}`, data);
+            showToast('Categoría actualizada correctamente', 'success');
+        } else {
+            await apiPost('categorias', data);
+            showToast('Categoría creada correctamente', 'success');
+        }
+        closeModal('categoriaModal');
+        await loadCategorias();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function confirmDelete(id, nombre) {
+    showConfirm(
+        'Eliminar Categoría',
+        `¿Seguro que deseas eliminar la categoría <strong class="confirm-strong">"${nombre}"</strong>? Esta acción no se puede deshacer.`,
+        async () => {
+            try {
+                await apiDelete(`categorias/${id}`);
+                showToast('Categoría eliminada correctamente', 'success');
+                await loadCategorias();
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            }
+        },
+        { danger: true, confirmText: 'Eliminar' }
+    );
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+</script>
+}

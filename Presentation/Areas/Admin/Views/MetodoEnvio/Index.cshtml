@@ -1,0 +1,214 @@
+@{
+    ViewData["Title"] = "Métodos de Envío";
+    ViewData["ActivePage"] = "Envios";
+}
+
+<div class="page-header animate-fade-up">
+    <div>
+        <h1 class="page-title">Métodos de Envío</h1>
+        <p class="page-subtitle">Configura las tarifas y tiempos de entrega disponibles</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn-admin btn-primary" onclick="openCreateModal()">
+            <i data-lucide="plus" style="width:16px;height:16px;"></i>
+            Nuevo Método
+        </button>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="table-card animate-fade-up" style="animation-delay:100ms;">
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <div class="search-input-wrapper">
+                <span class="search-icon"><i data-lucide="search" style="width:15px;height:15px;"></i></span>
+                <input type="text" class="search-input" placeholder="Buscar método de envío..." id="searchEnvio" oninput="filterTable()" />
+            </div>
+        </div>
+        <div class="table-toolbar-right">
+            <span class="cell-muted" style="font-size:0.82rem;" id="totalCount"></span>
+        </div>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Tarifa</th>
+                <th>Tiempo Estimado</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="enviosBody">
+        </tbody>
+    </table>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal-overlay" id="envioModal">
+    <div class="modal-container" style="max-width:500px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Nuevo Método de Envío</h3>
+            <button class="modal-close" onclick="closeModal('envioModal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="envioForm" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="envioId" />
+                <div class="form-group">
+                    <label class="form-label" for="nombre">Nombre *</label>
+                    <input type="text" class="form-input" id="nombre" placeholder="Ej: Express, Estándar, Económico..." required maxlength="100" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="costo">Tarifa (C$) *</label>
+                        <input type="number" class="form-input" id="costo" placeholder="0.00" required step="0.01" min="0" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="tiempoEntrega">Tiempo estimado</label>
+                        <input type="text" class="form-input" id="tiempoEntrega" placeholder="Ej: 2-3 días hábiles" />
+                    </div>
+                </div>
+                <div class="form-hint" style="margin-top:-8px;">
+                    <i data-lucide="info" style="width:12px;height:12px;display:inline;vertical-align:middle;"></i>
+                    Los cambios solo aplican a pedidos futuros.
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-admin btn-secondary" onclick="closeModal('envioModal')">Cancelar</button>
+            <button class="btn-admin btn-primary" onclick="document.getElementById('envioForm').requestSubmit()" id="submitBtn">
+                <i data-lucide="save" style="width:15px;height:15px;"></i> Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allMetodos = [];
+
+document.addEventListener('DOMContentLoaded', () => loadMetodos());
+
+async function loadMetodos() {
+    showTableSkeleton('enviosBody', 5);
+    try {
+        allMetodos = await apiGet('metodos-envio');
+        renderTable(allMetodos);
+    } catch (e) {
+        showToast('Error al cargar métodos de envío: ' + e.message, 'error');
+        showEmptyState('enviosBody', 'alert-circle', 'Error', 'No se pudieron cargar los métodos de envío.');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('enviosBody');
+    document.getElementById('totalCount').textContent = `${data.length} método${data.length !== 1 ? 's' : ''}`;
+
+    if (!data.length) {
+        showEmptyState('enviosBody', 'truck', 'Sin métodos de envío', 'Crea tu primer método de envío.',
+            '<button class="btn-admin btn-primary btn-sm" onclick="openCreateModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Nuevo Método</button>');
+        return;
+    }
+
+    tbody.innerHTML = data.map(m => `
+        <tr>
+            <td class="cell-muted">#${m.id}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center;color:var(--color-info);">
+                        <i data-lucide="truck" style="width:16px;height:16px;"></i>
+                    </div>
+                    <span class="cell-bold">${esc(m.nombre)}</span>
+                </div>
+            </td>
+            <td class="cell-bold">${formatCurrency(m.costo)}</td>
+            <td class="cell-muted">${m.tiempoEntrega || '—'}</td>
+            <td>
+                <div class="cell-actions">
+                    <button class="btn-admin btn-ghost btn-icon" title="Editar" onclick="openEditModal(${m.id})">
+                        <i data-lucide="pencil" style="width:15px;height:15px;"></i>
+                    </button>
+                    <button class="btn-admin btn-danger btn-icon" title="Eliminar" onclick="confirmDelete(${m.id}, '${esc(m.nombre)}')">
+                        <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    lucide.createIcons();
+}
+
+function filterTable() {
+    const q = document.getElementById('searchEnvio').value.toLowerCase();
+    const filtered = allMetodos.filter(m => m.nombre.toLowerCase().includes(q));
+    renderTable(filtered);
+}
+
+function openCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Nuevo Método de Envío';
+    document.getElementById('envioId').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('costo').value = '';
+    document.getElementById('tiempoEntrega').value = '';
+    openModal('envioModal');
+    lucide.createIcons();
+}
+
+function openEditModal(id) {
+    const m = allMetodos.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('modalTitle').textContent = 'Editar Método de Envío';
+    document.getElementById('envioId').value = m.id;
+    document.getElementById('nombre').value = m.nombre;
+    document.getElementById('costo').value = m.costo;
+    document.getElementById('tiempoEntrega').value = m.tiempoEntrega || '';
+    openModal('envioModal');
+    lucide.createIcons();
+}
+
+async function handleSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('envioId').value;
+    const data = {
+        nombre: document.getElementById('nombre').value.trim(),
+        costo: parseFloat(document.getElementById('costo').value),
+        tiempoEntrega: document.getElementById('tiempoEntrega').value.trim() || null
+    };
+
+    try {
+        if (id) {
+            await apiPut(`metodos-envio/${id}`, data);
+            showToast('Método de envío actualizado', 'success');
+        } else {
+            await apiPost('metodos-envio', data);
+            showToast('Método de envío creado', 'success');
+        }
+        closeModal('envioModal');
+        await loadMetodos();
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+function confirmDelete(id, nombre) {
+    showConfirm('Eliminar Método de Envío',
+        `¿Seguro que deseas eliminar <strong class="confirm-strong">"${nombre}"</strong>?`,
+        async () => {
+            try {
+                await apiDelete(`metodos-envio/${id}`);
+                showToast('Método de envío eliminado', 'success');
+                await loadMetodos();
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+        },
+        { danger: true, confirmText: 'Eliminar' }
+    );
+}
+
+function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+</script>
+}
