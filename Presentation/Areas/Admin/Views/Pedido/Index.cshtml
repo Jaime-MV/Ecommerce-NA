@@ -150,7 +150,7 @@ function renderTable(data) {
     tbody.innerHTML = data.map(p => `
         <tr>
             <td class="cell-bold">#${p.id}</td>
-            <td class="cell-muted">${formatDateShort(p.fechaCreacion)}</td>
+            <td class="cell-muted">${formatDateShort(p.fechaPedido)}</td>
             <td>
                 <span class="badge status-${p.estado.toLowerCase()}">
                     <span class="badge-dot"></span>${p.estado}
@@ -231,7 +231,7 @@ async function viewDetail(id) {
                 </div>
                 <div>
                     <div class="form-label">Fecha</div>
-                    <div>${formatDate(pedido.fechaCreacion)}</div>
+                    <div>${formatDate(pedido.fechaPedido)}</div>
                 </div>
                 <div>
                     <div class="form-label">Estado</div>

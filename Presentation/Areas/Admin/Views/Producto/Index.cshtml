@@ -63,8 +63,8 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label" for="sku">SKU</label>
-                        <input type="text" class="form-input" id="sku" placeholder="SKU-001" />
+                        <label class="form-label" for="descripcion">Descripción</label>
+                        <input type="text" class="form-input" id="descripcion" placeholder="Descripción del producto" />
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="categoriaId">Categoría *</label>
@@ -75,8 +75,8 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label" for="precioBase">Precio Base (C$) *</label>
-                        <input type="number" class="form-input" id="precioBase" placeholder="0.00" required step="0.01" min="0" />
+                        <label class="form-label" for="precioOriginal">Precio Original (C$) *</label>
+                        <input type="number" class="form-input" id="precioOriginal" placeholder="0.00" required step="0.01" min="0" />
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="imagenUrl">URL de Imagen</label>
@@ -169,7 +169,7 @@ function renderTable(data) {
 
     tbody.innerHTML = data.map(p => {
         const hasDiscount = p.porcentajeDescuento > 0;
-        const discountedPrice = p.precioBase * (1 - p.porcentajeDescuento / 100);
+        const discountedPrice = p.precioOriginal * (1 - p.porcentajeDescuento / 100);
         return `
         <tr>
             <td>
@@ -180,7 +180,7 @@ function renderTable(data) {
                     }
                     <div class="product-cell-info">
                         <span class="product-cell-name">${esc(p.nombre)}</span>
-                        ${p.sku ? `<span class="product-cell-sku">${esc(p.sku)}</span>` : ''}
+                        ${p.descripcion ? `<span class="product-cell-sku">${esc(p.descripcion)}</span>` : ''}
                     </div>
                 </div>
             </td>
@@ -189,8 +189,8 @@ function renderTable(data) {
             </td>
             <td>
                 ${hasDiscount
-                    ? `<span class="price-original">${formatCurrency(p.precioBase)}</span><br/><span class="price-discount">${formatCurrency(discountedPrice)}</span>`
-                    : `<span class="cell-bold">${formatCurrency(p.precioBase)}</span>`
+                    ? `<span class="price-original">${formatCurrency(p.precioOriginal)}</span><br/><span class="price-discount">${formatCurrency(discountedPrice)}</span>`
+                    : `<span class="cell-bold">${formatCurrency(p.precioOriginal)}</span>`
                 }
             </td>
             <td>
@@ -221,7 +221,7 @@ function filterTable() {
     const q = document.getElementById('searchProducto').value.toLowerCase();
     const catFilter = document.getElementById('filterCategoria').value;
     const filtered = allProductos.filter(p => {
-        const matchText = p.nombre.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
+        const matchText = p.nombre.toLowerCase().includes(q) || (p.descripcion && p.descripcion.toLowerCase().includes(q));
         const matchCat = !catFilter || p.categoriaId == catFilter;
         return matchText && matchCat;
     });
@@ -232,9 +232,9 @@ function openCreateModal() {
     document.getElementById('modalTitle').textContent = 'Nuevo Producto';
     document.getElementById('productoId').value = '';
     document.getElementById('nombre').value = '';
-    document.getElementById('sku').value = '';
+    document.getElementById('descripcion').value = '';
     document.getElementById('categoriaId').value = '';
-    document.getElementById('precioBase').value = '';
+    document.getElementById('precioOriginal').value = '';
     document.getElementById('imagenUrl').value = '';
     openModal('productoModal');
 }
@@ -245,9 +245,9 @@ function openEditModal(id) {
     document.getElementById('modalTitle').textContent = 'Editar Producto';
     document.getElementById('productoId').value = p.id;
     document.getElementById('nombre').value = p.nombre;
-    document.getElementById('sku').value = p.sku || '';
+    document.getElementById('descripcion').value = p.descripcion || '';
     document.getElementById('categoriaId').value = p.categoriaId;
-    document.getElementById('precioBase').value = p.precioBase;
+    document.getElementById('precioOriginal').value = p.precioOriginal;
     document.getElementById('imagenUrl').value = p.imagenUrl || '';
     openModal('productoModal');
 }
@@ -257,9 +257,9 @@ async function handleSubmit(e) {
     const id = document.getElementById('productoId').value;
     const data = {
         nombre: document.getElementById('nombre').value.trim(),
-        sku: document.getElementById('sku').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
         categoriaId: parseInt(document.getElementById('categoriaId').value),
-        precioBase: parseFloat(document.getElementById('precioBase').value),
+        precioOriginal: parseFloat(document.getElementById('precioOriginal').value),
         imagenUrl: document.getElementById('imagenUrl').value.trim() || null
     };
     try {
