@@ -1,4 +1,5 @@
-﻿@{
+﻿@model IEnumerable<Ecommerce.Datos.Entity.Producto>
+@{
     ViewData["Title"] = "Inicio";
     Layout = null;
 }
@@ -214,7 +215,7 @@
         .categories {
             position: relative; z-index: 1;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             min-height: 70vh;
         }
         .cat-card {
@@ -240,6 +241,11 @@
             background:
                 linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
                 linear-gradient(135deg, #151015 0%, #1a1218 50%, #100f12 100%);
+        }
+        .cat-unisex .cat-card-bg {
+            background:
+                linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
+                linear-gradient(135deg, #121516 0%, #17181a 50%, #0d0f11 100%);
         }
         /* Geometric accent */
         .cat-card::before {
@@ -451,6 +457,138 @@
         .footer-links a:hover { color: var(--gold); }
 
         /* ══════════════════════════════
+           PRODUCTOS
+        ══════════════════════════════ */
+        .products-section {
+            position: relative; z-index: 1;
+            padding: 7rem 3.5rem;
+            background: var(--bg);
+        }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5px;
+            background: var(--border);
+        }
+        .product-card {
+            background: var(--surface);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card:hover { background: var(--surface2); }
+        .product-img-wrap {
+            position: relative;
+            aspect-ratio: 4/3;
+            background: #1a1810;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .product-img-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1);
+        }
+        .product-card:hover .product-img-wrap img { transform: scale(1.06); }
+        .product-no-img {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            gap: 0.5rem;
+        }
+        .product-no-img svg { color: var(--gold-dim); opacity: 0.5; }
+        .product-no-img span { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .product-badge {
+            position: absolute; top: 1rem; left: 1rem;
+            background: var(--gold);
+            color: var(--bg);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 1px;
+        }
+        .product-badge-agotado {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(224,90,90,0.85);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 1px;
+        }
+        .product-body {
+            padding: 1.4rem 1.6rem 1.8rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .product-cat {
+            font-size: 0.68rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+        }
+        .product-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: var(--text);
+            line-height: 1.25;
+        }
+        .product-colors {
+            display: flex; gap: 5px; flex-wrap: wrap;
+            margin-top: 0.2rem;
+        }
+        .color-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+        .product-footer {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            margin-top: auto;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+        .product-price {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: var(--gold);
+        }
+        .product-price-orig {
+            font-size: 0.82rem;
+            color: var(--muted);
+            text-decoration: line-through;
+            margin-bottom: 0.1rem;
+        }
+        .product-stock {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            text-align: right;
+        }
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--muted);
+        }
+        .empty-state svg { color: var(--gold-dim); margin-bottom: 1rem; opacity: 0.4; }
+        .empty-state p { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; }
+
+        /* ══════════════════════════════
            ANIMATIONS
         ══════════════════════════════ */
         @@keyframes fadeUp {
@@ -467,6 +605,17 @@
         .reveal-delay-1 { transition-delay: 0.1s; }
         .reveal-delay-2 { transition-delay: 0.2s; }
         .reveal-delay-3 { transition-delay: 0.3s; }
+
+        @@media (max-width: 1100px) {
+            .products-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @@media (max-width: 768px) {
+            .products-section { padding: 5rem 1.5rem; }
+            .products-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @@media (max-width: 480px) {
+            .products-grid { grid-template-columns: 1fr; }
+        }
 
         @@media (max-width: 768px) {
             nav { padding: 0 1.5rem; }
@@ -488,7 +637,7 @@
     <nav>
         <a href="/" class="nav-brand">Ecommerce NA</a>
         <ul class="nav-links">
-            <li><a href="#categorias">Colección</a></li>
+            <li><a href="#productos">Colección</a></li>
             <li><a href="#nosotros">Nosotros</a></li>
             @if (SignInManager.IsSignedIn(User))
             {
@@ -561,7 +710,7 @@
 
     <!-- ── CATEGORÍAS ── -->
     <section id="categorias" class="categories">
-        <a href="#" class="cat-card cat-men">
+        <a href="#productos" class="cat-card cat-men" data-genero="Hombre">
             <div class="cat-card-bg"></div>
             <div class="cat-content">
                 <div class="cat-label">Colección</div>
@@ -569,7 +718,7 @@
                 <div class="cat-arrow">Explorar</div>
             </div>
         </a>
-        <a href="#" class="cat-card cat-women">
+        <a href="#productos" class="cat-card cat-women" data-genero="Mujer">
             <div class="cat-card-bg"></div>
             <div class="cat-content">
                 <div class="cat-label">Colección</div>
@@ -577,6 +726,126 @@
                 <div class="cat-arrow">Explorar</div>
             </div>
         </a>
+        <a href="#productos" class="cat-card cat-unisex" data-genero="Unisex">
+            <div class="cat-card-bg"></div>
+            <div class="cat-content">
+                <div class="cat-label">Colección</div>
+                <div class="cat-title">Unisex</div>
+                <div class="cat-arrow">Explorar</div>
+            </div>
+        </a>
+    </section>
+
+    <!-- ── PRODUCTOS ── -->
+    <section id="productos" class="products-section">
+        <div class="section-header">
+            <div>
+                <div class="section-eyebrow reveal">Catálogo</div>
+                <h2 class="section-title reveal reveal-delay-1">Últimos productos<br>disponibles</h2>
+            </div>
+            <a href="#productos" class="btn-outline-gold reveal reveal-delay-1 btn-ver-todo" style="white-space:nowrap">Ver todo el catálogo</a>
+        </div>
+        <div class="products-grid">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var p in Model)
+                {
+                    var precioFinal = p.PorcentajeDescuento > 0
+                        ? p.PrecioOriginal * (1 - (decimal)p.PorcentajeDescuento / 100)
+                        : p.PrecioOriginal;
+                    var stockTotal = p.Variantes.Sum(v => v.Stock);
+                    var colores = p.Variantes
+                        .Where(v => v.Stock > 0 && !string.IsNullOrEmpty(v.Color))
+                        .Select(v => v.Color!)
+                        .Distinct()
+                        .Take(6)
+                        .ToList();
+                    var placeholders = new[] {
+                        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1551107696-a4b0c5a0d1a6?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1605348532760-6753d2c43329?q=80&w=600&auto=format&fit=crop"
+                    };
+                    var fallbackImg = placeholders[p.Id % placeholders.Length];
+                    <div class="product-card reveal" data-genero="@(p.Genero?.ToLower() ?? "unisex")">
+                        <div class="product-img-wrap">
+                            <img src="@(string.IsNullOrEmpty(p.ImagenUrl) ? fallbackImg : p.ImagenUrl)" 
+                                 alt="@p.Nombre" loading="lazy" 
+                                 onerror="this.onerror=null; this.src='@fallbackImg';" />
+                            @if (p.PorcentajeDescuento > 0)
+                            {
+                                <div class="product-badge">-@p.PorcentajeDescuento%</div>
+                            }
+                            @if (stockTotal == 0)
+                            {
+                                <div class="product-badge-agotado">Agotado</div>
+                            }
+                        </div>
+                        <div class="product-body">
+                            <div class="product-cat">@p.Categoria?.Nombre — @(p.Genero ?? "Universal")</div>
+                            <div class="product-name">@p.Nombre</div>
+                            @if (colores.Any())
+                            {
+                                <div class="product-colors">
+                                    @foreach (var color in colores)
+                                    {
+                                        <span class="color-dot" title="@color"
+                                              style="background: @(color.ToLower() switch {
+                                                  "negro" or "black" => "#222",
+                                                  "blanco" or "white" => "#f0f0f0",
+                                                  "rojo" or "red" => "#c0392b",
+                                                  "azul" or "blue" => "#2980b9",
+                                                  "café" or "brown" or "caffe" => "#6d4c2a",
+                                                  "gris" or "gray" or "grey" => "#7f8c8d",
+                                                  "beige" => "#d2b48c",
+                                                  "verde" or "green" => "#27ae60",
+                                                  "amarillo" or "yellow" => "#f1c40f",
+                                                  "naranja" or "orange" => "#e67e22",
+                                                  "morado" or "purple" => "#8e44ad",
+                                                  "rosa" or "pink" => "#e91e8c",
+                                                  "dorado" or "gold" => "#c9a96e",
+                                                  _ => "#555"
+                                              });"></span>
+                                    }
+                                </div>
+                            }
+                            <div class="product-footer">
+                                <div>
+                                    @if (p.PorcentajeDescuento > 0)
+                                    {
+                                        <div class="product-price-orig">$@p.PrecioOriginal.ToString("N2")</div>
+                                    }
+                                    <div class="product-price">$@precioFinal.ToString("N2")</div>
+                                </div>
+                                <div class="product-stock">
+                                    @if (stockTotal > 0)
+                                    {
+                                        <span>@stockTotal uds.</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#e05a5a">Sin stock</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="display:block;margin:0 auto 1rem">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <p>Aún no hay productos en el catálogo.</p>
+                </div>
+            }
+        </div>
     </section>
 
     <!-- ── FEATURES ── -->
@@ -679,6 +948,47 @@
             });
         }, { threshold: 0.12 });
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Filtro de categorías
+        const catCards = document.querySelectorAll('.cat-card');
+        const productCards = document.querySelectorAll('.product-card');
+        const btnVerTodo = document.querySelector('.btn-ver-todo');
+
+        catCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const targetGenero = card.getAttribute('data-genero').trim().toLowerCase();
+
+                productCards.forEach(pCard => {
+                    const originalProductGenero = pCard.getAttribute('data-genero') || "";
+                    const productGenero = originalProductGenero.trim().toLowerCase();
+                    
+                    let match = false;
+                    if (targetGenero === 'hombre') {
+                        match = (productGenero === 'hombre' || productGenero === 'masculino');
+                    } else if (targetGenero === 'mujer') {
+                        match = (productGenero === 'mujer' || productGenero === 'femenino');
+                    } else {
+                        // Unisex
+                        match = (productGenero === targetGenero);
+                    }
+
+                    if (match) {
+                        pCard.style.display = 'flex';
+                    } else {
+                        pCard.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Ver todo el catálogo (restaurar filtro)
+        if (btnVerTodo) {
+            btnVerTodo.addEventListener('click', (e) => {
+                productCards.forEach(pCard => {
+                    pCard.style.display = 'flex';
+                });
+            });
+        }
     </script>
 </body>
 </html>
