@@ -42,7 +42,7 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{area=Admin}/{controller=Dashboard}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 
