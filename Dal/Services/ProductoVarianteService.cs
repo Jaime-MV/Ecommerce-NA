@@ -29,11 +29,27 @@ namespace Ecommerce.Negocio.Services
 
         public async Task<ProductoVarianteDto> AgregarVarianteAsync(CreateProductoVarianteDto dto)
         {
+            // Validate input lengths to match DB constraints
+            if (string.IsNullOrWhiteSpace(dto.Talla))
+                throw new InvalidOperationException("La talla es requerida.");
+
+            if (dto.Talla.Trim().Length > 10)
+                throw new InvalidOperationException($"La talla no puede exceder 10 caracteres (ingresaste {dto.Talla.Trim().Length}).");
+
+            if (!string.IsNullOrWhiteSpace(dto.Color) && dto.Color.Trim().Length > 30)
+                throw new InvalidOperationException($"El color no puede exceder 30 caracteres (ingresaste {dto.Color.Trim().Length}).");
+
+            // Normalize color: treat empty string as null
+            var colorNormalized = string.IsNullOrWhiteSpace(dto.Color) ? null : dto.Color.Trim();
+
+            // Check for duplicate using case-insensitive comparison safe for PostgreSQL
             var varianteExistente = await _context.ProductoVariantes
-                .FirstOrDefaultAsync(v => v.ProductoId == dto.ProductoId && 
-                                          v.Talla.ToLower() == dto.Talla.ToLower() && 
-                                          v.Color != null && dto.Color != null &&
-                                          v.Color.ToLower() == dto.Color.ToLower());
+                .Where(v => v.ProductoId == dto.ProductoId)
+                .Where(v => v.Talla.ToLower() == dto.Talla.ToLower().Trim())
+                .Where(v => colorNormalized == null 
+                    ? v.Color == null 
+                    : v.Color != null && v.Color.ToLower() == colorNormalized.ToLower())
+                .FirstOrDefaultAsync();
 
             if (varianteExistente != null)
             {
@@ -43,13 +59,29 @@ namespace Ecommerce.Negocio.Services
             var variante = new ProductoVariante
             {
                 ProductoId = dto.ProductoId,
-                Talla = dto.Talla,
-                Color = dto.Color,
+                Talla = dto.Talla.Trim(),
+                Color = colorNormalized,
                 Stock = dto.Stock
             };
 
             _context.ProductoVariantes.Add(variante);
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Catch unique constraint violations from the DB
+                if (ex.InnerException?.Message?.Contains("duplicate") == true ||
+                    ex.InnerException?.Message?.Contains("unique") == true ||
+                    ex.InnerException?.Message?.Contains("23505") == true)
+                {
+                    throw new InvalidOperationException("Ya existe una variante con esta talla y color para el producto.");
+                }
+                throw;
+            }
+
             return MapToDto(variante);
         }
 
@@ -70,7 +102,7 @@ namespace Ecommerce.Negocio.Services
             return MapToDto(variante);
         }
 
-        public async Task<bool> DesactivarVarianteAsync(int id)
+        public async Task<bool> EliminarVarianteAsync(int id)
         {
             var variante = await _context.ProductoVariantes.FindAsync(id);
             if (variante == null) return false;

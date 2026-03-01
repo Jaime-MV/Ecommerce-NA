@@ -1,15 +1,17 @@
 using Ecommerce.Datos.Entity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Datos.Context
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<Usuario>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
 
-        public DbSet<Usuario> Usuarios { get; set; }
+        // Usuario is managed by IdentityDbContext (accessible via .Users)
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Producto> Productos { get; set; }
         public DbSet<ProductoVariante> ProductoVariantes { get; set; }
@@ -23,6 +25,9 @@ namespace Ecommerce.Datos.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Map Identity user to the existing "Usuario" table
+            modelBuilder.Entity<Usuario>().ToTable("Usuario");
 
             // Restricción única: un carrito por usuario
             modelBuilder.Entity<Carrito>()

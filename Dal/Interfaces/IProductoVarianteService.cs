@@ -9,6 +9,6 @@ namespace Ecommerce.Negocio.Interfaces
         Task<IEnumerable<ProductoVarianteDto>> ObtenerVariantesPorProductoAsync(int productoId);
         Task<ProductoVarianteDto> AgregarVarianteAsync(CreateProductoVarianteDto dto);
         Task<ProductoVarianteDto> ActualizarStockAsync(int varianteId, int nuevoStock);
-        Task<bool> DesactivarVarianteAsync(int id); // Borrado lógico
+        Task<bool> EliminarVarianteAsync(int id);
     }
 }
