@@ -642,7 +642,6 @@
             @if (SignInManager.IsSignedIn(User))
             {
                 var usuario = await UserManager.GetUserAsync(User);
-                var carritoCount = 0;
                 if (usuario != null)
                 {
                     // Importamos el contexto en la vista no es ideal, pero funciona aquí
