@@ -1,0 +1,29 @@
+@using Microsoft.AspNetCore.Identity
+@using Ecommerce.Datos.Entity
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
+
+<ul class="navbar-nav">
+@if (SignInManager.IsSignedIn(User))
+{
+    var user = await UserManager.GetUserAsync(User);
+    var name = user?.NombreCompleto ?? UserManager.GetUserName(User);
+    <li class="nav-item">
+        <span class="nav-link text-dark">Hola @name!</span>
+    </li>
+    <li class="nav-item">
+        <form id="logoutForm" class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
+            <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Salir</button>
+        </form>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" id="register" asp-controller="Account" asp-action="Register">Registrarse</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" id="login" asp-controller="Account" asp-action="Login">Iniciar sesión</a>
+    </li>
+}
+</ul>
