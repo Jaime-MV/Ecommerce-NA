@@ -62,10 +62,10 @@ namespace Ecommerce.Presentacion.Areas.Admin.Controllers
         }
 
         [HttpDelete("variantes/{id}")]
-        public async Task<IActionResult> Desactivar(int id)
+        public async Task<IActionResult> Eliminar(int id)
         {
-            var desactivo = await _varianteService.DesactivarVarianteAsync(id);
-            if (!desactivo) return NotFound();
+            var eliminado = await _varianteService.EliminarVarianteAsync(id);
+            if (!eliminado) return NotFound();
             return NoContent();
         }
     }
