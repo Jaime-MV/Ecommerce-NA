@@ -1,0 +1,266 @@
+@model Ecommerce.Presentacion.Models.ViewModels.CarritoViewModel
+@using Microsoft.AspNetCore.Identity
+@using Ecommerce.Datos.Entity
+@inject UserManager<Usuario> UserManager
+@{
+    ViewData["Title"] = "Finalizar compra";
+    Layout = null;
+    var metodosEnvio = ViewBag.MetodosEnvio as List<MetodoEnvio> ?? new List<MetodoEnvio>();
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finalizar Compra — Ecommerce NA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg:#0a0a0b; --surface:#111113; --surface2:#161618;
+            --border:rgba(255,255,255,0.08); --gold:#c9a96e; --gold-dim:#8a6d3b;
+            --gold-pale:rgba(201,169,110,0.12); --text:#e8e3db; --muted:#6b6560;
+            --light:#a09890; --nav-h:70px; --success:#4caf7d; --danger:#e05a5a;
+        }
+        html { scroll-behavior:smooth; }
+        body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; }
+        body::before {
+            content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+        }
+
+        nav {
+            position:fixed; top:0; left:0; right:0; z-index:100;
+            height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
+            padding:0 3.5rem; background:rgba(10,10,11,0.92); backdrop-filter:blur(20px);
+            border-bottom:1px solid var(--border);
+        }
+        .nav-brand { font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:300; letter-spacing:0.3em; text-transform:uppercase; color:var(--gold); text-decoration:none; }
+        .nav-back { font-size:0.78rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--light); text-decoration:none; display:flex; align-items:center; gap:0.5rem; transition:color 0.2s; }
+        .nav-back:hover { color:var(--gold); }
+
+        /* CHECKOUT LAYOUT */
+        .checkout-wrap {
+            position:relative; z-index:1;
+            display:grid; grid-template-columns:1fr 420px;
+            gap:0; padding-top:var(--nav-h);
+            min-height:100vh;
+        }
+
+        /* LEFT: FORM */
+        .checkout-form-panel { padding:3.5rem; border-right:1px solid var(--border); }
+        .section-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:300; color:var(--text); margin-bottom:2rem; }
+        .section-sub-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:300; color:var(--text); margin:2rem 0 1.2rem; }
+
+        .form-group { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.2rem; }
+        .form-label { font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); }
+        .form-input {
+            width:100%; padding:0.8rem 1rem;
+            background:var(--surface2); border:1px solid var(--border);
+            color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.9rem;
+            border-radius:1px; outline:none;
+            transition:border-color 0.2s;
+        }
+        .form-input:focus { border-color:var(--gold); }
+        .form-input::placeholder { color:var(--muted); }
+
+        /* Métodos de envío */
+        .envio-options { display:flex; flex-direction:column; gap:0.8rem; }
+        .envio-option {
+            display:flex; align-items:center; gap:1rem;
+            padding:1rem 1.2rem;
+            background:var(--surface2); border:1px solid var(--border);
+            border-radius:1px; cursor:pointer;
+            transition:border-color 0.2s, background 0.2s;
+        }
+        .envio-option:has(input:checked) { border-color:var(--gold); background:var(--gold-pale); }
+        .envio-option input[type="radio"] { accent-color:var(--gold); width:16px; height:16px; cursor:pointer; }
+        .envio-option-info { flex:1; }
+        .envio-option-name { font-size:0.9rem; color:var(--text); }
+        .envio-option-tiempo { font-size:0.78rem; color:var(--muted); margin-top:0.15rem; }
+        .envio-option-precio { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:300; color:var(--gold); }
+
+        .btn-confirm {
+            display:flex; align-items:center; justify-content:center; gap:0.7rem;
+            width:100%; padding:1.1rem;
+            background:var(--gold); color:var(--bg);
+            border:none; border-radius:1px;
+            font-family:'DM Sans',sans-serif;
+            font-size:0.85rem; font-weight:500; letter-spacing:0.2em; text-transform:uppercase;
+            cursor:pointer; margin-top:2rem;
+            transition:opacity 0.25s, transform 0.25s;
+        }
+        .btn-confirm:hover { opacity:0.88; transform:translateY(-1px); }
+
+        /* RIGHT: SUMMARY */
+        .checkout-summary { padding:3.5rem 2.5rem; background:var(--surface); position:sticky; top:var(--nav-h); height:fit-content; }
+        .summary-title { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:300; color:var(--text); margin-bottom:1.5rem; }
+        .summary-items { display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem; }
+        .sum-item { display:flex; gap:1rem; align-items:center; }
+        .sum-item-img { width:52px; height:52px; object-fit:cover; border-radius:1px; background:#1a1810; flex-shrink:0; }
+        .sum-item-info { flex:1; }
+        .sum-item-name { font-size:0.85rem; color:var(--text); line-height:1.3; }
+        .sum-item-meta { font-size:0.75rem; color:var(--muted); margin-top:0.15rem; }
+        .sum-item-price { font-size:0.85rem; color:var(--gold); white-space:nowrap; }
+        .divider { height:1px; background:var(--border); margin:1rem 0; }
+        .sum-row { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.6rem; }
+        .sum-row .lbl { color:var(--muted); }
+        .sum-row .amt { color:var(--text); }
+        .sum-total { display:flex; justify-content:space-between; align-items:baseline; margin-top:0.5rem; padding-top:1rem; border-top:1px solid var(--border); }
+        .sum-total .lbl { font-size:0.82rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+        .sum-total .amt { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; color:var(--gold); }
+        
+        #total-display { transition:all 0.3s; }
+
+        /* Alerts */
+        .alert-box { padding:0.85rem 1.2rem; border-radius:2px; font-size:0.85rem; line-height:1.4; margin-bottom:1rem; }
+        .alert-box.error { background:rgba(224,90,90,0.1); border:1px solid rgba(224,90,90,0.3); color:var(--danger); }
+
+        @@media (max-width:900px) {
+            .checkout-wrap { grid-template-columns:1fr; }
+            .checkout-summary { position:static; border-top:1px solid var(--border); }
+            .checkout-form-panel, .checkout-summary { padding:2rem 1.5rem; }
+            nav { padding:0 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/" class="nav-brand">Ecommerce NA</a>
+        <a asp-controller="Carrito" asp-action="Index" class="nav-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver al carrito
+        </a>
+    </nav>
+
+    @if (TempData["Error"] != null)
+    {
+        <div style="position:relative;z-index:1;padding:1rem calc(var(--nav-h) + 1rem) 0 3.5rem">
+            <div class="alert-box error">✕ @TempData["Error"]</div>
+        </div>
+    }
+
+    <div class="checkout-wrap">
+
+        <!-- FORMULARIO -->
+        <div class="checkout-form-panel">
+            <h1 class="section-title">Finalizar Compra</h1>
+
+            <form asp-controller="Carrito" asp-action="ConfirmarPedido" method="post" id="checkout-form">
+                @Html.AntiForgeryToken()
+
+                <!-- Dirección -->
+                <div class="section-sub-title">Dirección de envío</div>
+                <div class="form-group">
+                    <label class="form-label" for="direccion">Dirección completa</label>
+                    <textarea class="form-input" name="direccion" id="direccion" rows="3" placeholder="Calle, número, colonia, ciudad, estado, CP..." required></textarea>
+                </div>
+
+                <!-- Método de envío -->
+                <div class="section-sub-title">Método de envío</div>
+                @if (metodosEnvio.Any())
+                {
+                    <div class="envio-options">
+                        @foreach (var metodo in metodosEnvio)
+                        {
+                            <label class="envio-option">
+                                <input type="radio" name="metodoEnvioId" value="@metodo.Id"
+                                       data-costo="@metodo.Costo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                       onchange="actualizarTotal(this)"
+                                       @(metodosEnvio.IndexOf(metodo) == 0 ? "checked" : "") />
+                                <div class="envio-option-info">
+                                    <div class="envio-option-name">@metodo.Nombre</div>
+                                    @if (!string.IsNullOrEmpty(metodo.TiempoEstimado))
+                                    {
+                                        <div class="envio-option-tiempo">@metodo.TiempoEstimado</div>
+                                    }
+                                </div>
+                                <div class="envio-option-precio">$@metodo.Costo.ToString("N2")</div>
+                            </label>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p style="font-size:0.85rem;color:var(--muted)">No hay métodos de envío disponibles. Contacta al administrador.</p>
+                    <input type="hidden" name="metodoEnvioId" value="0" />
+                }
+
+                <button type="submit" class="btn-confirm" @(metodosEnvio.Any() ? "" : "disabled")>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Confirmar pedido
+                </button>
+            </form>
+        </div>
+
+        <!-- RESUMEN -->
+        <div class="checkout-summary">
+            <div class="summary-title">Resumen</div>
+            <div class="summary-items">
+                @foreach (var item in Model.Items)
+                {
+                    var imgSrc = string.IsNullOrEmpty(item.ImagenUrl)
+                        ? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop"
+                        : item.ImagenUrl;
+                    <div class="sum-item">
+                        <img class="sum-item-img" src="@imgSrc" alt="@item.ProductoNombre"
+                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop';" />
+                        <div class="sum-item-info">
+                            <div class="sum-item-name">@item.ProductoNombre</div>
+                            <div class="sum-item-meta">T: @item.Talla @(item.Color != null && item.Color != "Único" ? "| " + item.Color : "") × @item.Cantidad</div>
+                        </div>
+                        <div class="sum-item-price">$@item.Subtotal.ToString("N2")</div>
+                    </div>
+                }
+            </div>
+            <div class="divider"></div>
+            <div class="sum-row"><span class="lbl">Subtotal</span><span class="amt">$@Model.Subtotal.ToString("N2")</span></div>
+            <div class="sum-row"><span class="lbl">Envío</span><span class="amt" id="envio-display">
+                @if (metodosEnvio.Any())
+                {
+                    @:$@metodosEnvio[0].Costo.ToString("N2")
+                }
+                else
+                {
+                    @:—
+                }
+            </span></div>
+            <div class="sum-total">
+                <span class="lbl">Total</span>
+                <span class="amt" id="total-display">
+                    @if (metodosEnvio.Any())
+                    {
+                        @:$@((Model.Subtotal + metodosEnvio[0].Costo).ToString("N2"))
+                    }
+                    else
+                    {
+                        @:$@Model.Subtotal.ToString("N2")
+                    }
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const subtotal = @Model.Subtotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+        function actualizarTotal(radio) {
+            const costo = parseFloat(radio.getAttribute('data-costo')) || 0;
+            const total = subtotal + costo;
+            document.getElementById('envio-display').textContent = '$' + costo.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            document.getElementById('total-display').textContent = '$' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // Inicializar con el primer método seleccionado
+        const firstRadio = document.querySelector('input[name="metodoEnvioId"]:checked');
+        if (firstRadio) actualizarTotal(firstRadio);
+    </script>
+</body>
+</html>

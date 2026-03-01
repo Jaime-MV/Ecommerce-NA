@@ -235,17 +235,17 @@
         .cat-men .cat-card-bg {
             background:
                 linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
-                linear-gradient(135deg, #1a1510 0%, #1e1b15 50%, #141210 100%);
+                url('/img/categorias/hombre.jpg') center/cover no-repeat;
         }
         .cat-women .cat-card-bg {
             background:
                 linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
-                linear-gradient(135deg, #151015 0%, #1a1218 50%, #100f12 100%);
+                url('/img/categorias/mujer.jpg') center/cover no-repeat;
         }
         .cat-unisex .cat-card-bg {
             background:
                 linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
-                linear-gradient(135deg, #121516 0%, #17181a 50%, #0d0f11 100%);
+                url('/img/categorias/unisex.jpg') center/cover no-repeat;
         }
         /* Geometric accent */
         .cat-card::before {
@@ -642,7 +642,18 @@
             @if (SignInManager.IsSignedIn(User))
             {
                 var usuario = await UserManager.GetUserAsync(User);
-                <li><a href="#">@(usuario?.NombreCompleto ?? usuario?.UserName ?? "Mi cuenta")</a></li>
+                var carritoCount = 0;
+                if (usuario != null)
+                {
+                    // Importamos el contexto en la vista no es ideal, pero funciona aquí
+                }
+                <li><a asp-controller="Account" asp-action="MisPedidos">@(usuario?.NombreCompleto ?? usuario?.UserName ?? "Mi cuenta")</a></li>
+                <li>
+                    <a asp-controller="Carrito" asp-action="Index" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1.2rem;border:1px solid var(--gold);color:var(--gold);border-radius:1px;text-decoration:none;font-size:0.78rem;letter-spacing:0.13em;text-transform:uppercase;transition:background 0.25s,color 0.25s;" onmouseover="this.style.background='var(--gold)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--gold)'">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        Carrito
+                    </a>
+                </li>
                 <li>
                     <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                         <button type="submit" class="nav-cta" style="background:none;font-family:'DM Sans',sans-serif;font-size:0.78rem;letter-spacing:0.13em;text-transform:uppercase;cursor:pointer;border-width:1px;">Salir</button>
@@ -771,7 +782,7 @@
                         "https://images.unsplash.com/photo-1605348532760-6753d2c43329?q=80&w=600&auto=format&fit=crop"
                     };
                     var fallbackImg = placeholders[p.Id % placeholders.Length];
-                    <div class="product-card reveal" data-genero="@(p.Genero?.ToLower() ?? "unisex")">
+                    <div class="product-card reveal" data-genero="@(p.Genero?.ToLower() ?? "unisex")" onclick="window.location='/Producto/Detalle/@p.Id'" style="cursor:pointer">
                         <div class="product-img-wrap">
                             <img src="@(string.IsNullOrEmpty(p.ImagenUrl) ? fallbackImg : p.ImagenUrl)" 
                                  alt="@p.Nombre" loading="lazy" 

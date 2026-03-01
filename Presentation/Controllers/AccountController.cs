@@ -2,6 +2,7 @@ using Ecommerce.Datos.Entity;
 using Ecommerce.Presentacion.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Presentacion.Controllers
 {
@@ -9,11 +10,13 @@ namespace Ecommerce.Presentacion.Controllers
     {
         private readonly UserManager<Usuario> _userManager;
         private readonly SignInManager<Usuario> _signInManager;
+        private readonly Ecommerce.Datos.Context.ApplicationDbContext _context;
 
-        public AccountController(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager)
+        public AccountController(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager, Ecommerce.Datos.Context.ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _context = context;
         }
 
         [HttpGet]
@@ -94,6 +97,23 @@ namespace Ecommerce.Presentacion.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> MisPedidos()
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var pedidos = await _context.Pedidos
+                .Include(p => p.MetodoEnvio)
+                .Include(p => p.Detalles)
+                    .ThenInclude(d => d.ProductoVariante)
+                        .ThenInclude(v => v.Producto)
+                .Where(p => p.UsuarioId == userId)
+                .OrderByDescending(p => p.FechaPedido)
+                .ToListAsync();
+
+            return View(pedidos);
         }
     }
 }

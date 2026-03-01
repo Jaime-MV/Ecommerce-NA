@@ -42,6 +42,36 @@ builder.Services.AddScoped<IPedidoAdminService, PedidoAdminService>();
 
 var app = builder.Build();
 
+// ── DATA SEEDER ─────────────────────────────────────────────────────────────
+// Pobla la DB con datos iniciales la primera vez que la app arranca
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        // Asegurar que las tablas existen (por si acaso EF no ha migrado aún)
+        await db.Database.EnsureCreatedAsync();
+
+        // Seed MetodoEnvio si la tabla está vacía
+        if (!db.MetodosEnvio.Any())
+        {
+            db.MetodosEnvio.AddRange(
+                new MetodoEnvio { Nombre = "Envio Estandar",      Costo = 99.00m,  TiempoEstimado = "5-7 dias habiles"   },
+                new MetodoEnvio { Nombre = "Envio Express",        Costo = 199.00m, TiempoEstimado = "2-3 dias habiles"   },
+                new MetodoEnvio { Nombre = "Envio Mismo Dia",      Costo = 349.00m, TiempoEstimado = "Hoy antes de 9pm"   },
+                new MetodoEnvio { Nombre = "Recogida en Tienda",   Costo = 0.00m,   TiempoEstimado = "Listo en 2 horas"   }
+            );
+            await db.SaveChangesAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Error durante el Data Seeder al iniciar la aplicacion.");
+    }
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -70,3 +100,4 @@ app.MapControllerRoute(
 
 
 app.Run();
+
