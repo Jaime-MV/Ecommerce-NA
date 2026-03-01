@@ -1,6 +1,7 @@
 using Ecommerce.Negocio.DTOs;
 using Ecommerce.Negocio.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Presentacion.Areas.Admin.Controllers
 {
@@ -44,6 +45,15 @@ namespace Ecommerce.Presentacion.Areas.Admin.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMsg = ex.InnerException?.Message ?? ex.Message;
+                return StatusCode(500, new { message = "Error de base de datos: " + innerMsg });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno: " + ex.Message });
             }
         }
 
