@@ -37,8 +37,8 @@ namespace Ecommerce.Negocio.Services
             var metodo = new MetodoEnvio
             {
                 Nombre = dto.Nombre,
-                Tarifa = dto.Costo,
-                TiempoEstimado = dto.TiempoEntrega ?? string.Empty
+                Costo = dto.Costo,
+                TiempoEstimado = dto.TiempoEstimado
             };
 
             _context.MetodosEnvio.Add(metodo);
@@ -52,8 +52,8 @@ namespace Ecommerce.Negocio.Services
             if (metodo == null) throw new KeyNotFoundException("Método de envío no encontrado");
 
             metodo.Nombre = dto.Nombre;
-            metodo.Tarifa = dto.Costo;
-            metodo.TiempoEstimado = dto.TiempoEntrega ?? string.Empty;
+            metodo.Costo = dto.Costo;
+            metodo.TiempoEstimado = dto.TiempoEstimado;
 
             _context.MetodosEnvio.Update(metodo);
             await _context.SaveChangesAsync();
@@ -76,8 +76,8 @@ namespace Ecommerce.Negocio.Services
             {
                 Id = m.Id,
                 Nombre = m.Nombre,
-                Costo = m.Tarifa,
-                TiempoEntrega = m.TiempoEstimado
+                Costo = m.Costo,
+                TiempoEstimado = m.TiempoEstimado
             };
         }
     }

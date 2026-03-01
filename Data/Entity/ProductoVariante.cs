@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Ecommerce.Datos.Entity
 {
+    [Table("ProductoVariante")]
     public class ProductoVariante
     {
         [Key]
@@ -15,17 +16,13 @@ namespace Ecommerce.Datos.Entity
         public Producto Producto { get; set; } = null!;
 
         [Required(ErrorMessage = "La talla es requerida")]
-        [StringLength(20)]
+        [StringLength(10)]
         public string Talla { get; set; } = null!;
 
-        [Required(ErrorMessage = "El color es requerido")]
-        [StringLength(50)]
-        public string Color { get; set; } = null!;
+        [StringLength(30)]
+        public string? Color { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo")]
         public int Stock { get; set; } = 0;
-
-        public bool Activo { get; set; } = true;
     }
 }

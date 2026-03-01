@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,6 +16,14 @@
 
     <!-- Admin CSS -->
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+
+    <!-- Theme: apply saved preference instantly to prevent flash -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('admin-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
 </head>
 <body class="admin-body">
 
@@ -96,6 +104,10 @@
                     </div>
                 </div>
                 <div class="topbar-right">
+                    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema">
+                        <i data-lucide="sun" class="icon-sun"></i>
+                        <i data-lucide="moon" class="icon-moon"></i>
+                    </button>
                     <button class="topbar-btn" title="Buscar" onclick="focusGlobalSearch()">
                         <i data-lucide="search"></i>
                     </button>
@@ -126,6 +138,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
         });
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('admin-theme', next);
+            // Re-render lucide icons for the toggle button
+            lucide.createIcons();
+        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

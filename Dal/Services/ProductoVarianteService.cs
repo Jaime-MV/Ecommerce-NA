@@ -22,17 +22,17 @@ namespace Ecommerce.Negocio.Services
         public async Task<IEnumerable<ProductoVarianteDto>> ObtenerVariantesPorProductoAsync(int productoId)
         {
             var variantes = await _context.ProductoVariantes
-                                 .Where(v => v.ProductoId == productoId && v.Activo)
+                                 .Where(v => v.ProductoId == productoId)
                                  .ToListAsync();
             return variantes.Select(v => MapToDto(v));
         }
 
         public async Task<ProductoVarianteDto> AgregarVarianteAsync(CreateProductoVarianteDto dto)
         {
-            // Validar que no haya un duplicado exacto de talla y color
             var varianteExistente = await _context.ProductoVariantes
                 .FirstOrDefaultAsync(v => v.ProductoId == dto.ProductoId && 
                                           v.Talla.ToLower() == dto.Talla.ToLower() && 
+                                          v.Color != null && dto.Color != null &&
                                           v.Color.ToLower() == dto.Color.ToLower());
 
             if (varianteExistente != null)
@@ -45,8 +45,7 @@ namespace Ecommerce.Negocio.Services
                 ProductoId = dto.ProductoId,
                 Talla = dto.Talla,
                 Color = dto.Color,
-                Stock = dto.Stock,
-                Activo = true
+                Stock = dto.Stock
             };
 
             _context.ProductoVariantes.Add(variante);
@@ -76,8 +75,8 @@ namespace Ecommerce.Negocio.Services
             var variante = await _context.ProductoVariantes.FindAsync(id);
             if (variante == null) return false;
 
-            variante.Activo = false; // Borrado lógico
-            _context.ProductoVariantes.Update(variante);
+            // Sin campo Activo en DB, eliminamos el registro directamente
+            _context.ProductoVariantes.Remove(variante);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -90,8 +89,7 @@ namespace Ecommerce.Negocio.Services
                 Talla = v.Talla,
                 Color = v.Color,
                 Stock = v.Stock,
-                ProductoId = v.ProductoId,
-                Activo = v.Activo
+                ProductoId = v.ProductoId
             };
         }
     }
