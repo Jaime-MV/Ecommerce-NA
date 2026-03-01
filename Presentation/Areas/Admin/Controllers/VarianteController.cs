@@ -1,6 +1,7 @@
 using Ecommerce.Negocio.DTOs;
 using Ecommerce.Negocio.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Presentacion.Areas.Admin.Controllers
 {
@@ -45,6 +46,15 @@ namespace Ecommerce.Presentacion.Areas.Admin.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (DbUpdateException ex)
+            {
+                var innerMsg = ex.InnerException?.Message ?? ex.Message;
+                return StatusCode(500, new { message = "Error de base de datos: " + innerMsg });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno: " + ex.Message });
+            }
         }
 
         [HttpPatch("variantes/{id}/stock")]
@@ -62,10 +72,10 @@ namespace Ecommerce.Presentacion.Areas.Admin.Controllers
         }
 
         [HttpDelete("variantes/{id}")]
-        public async Task<IActionResult> Desactivar(int id)
+        public async Task<IActionResult> Eliminar(int id)
         {
-            var desactivo = await _varianteService.DesactivarVarianteAsync(id);
-            if (!desactivo) return NotFound();
+            var eliminado = await _varianteService.EliminarVarianteAsync(id);
+            if (!eliminado) return NotFound();
             return NoContent();
         }
     }

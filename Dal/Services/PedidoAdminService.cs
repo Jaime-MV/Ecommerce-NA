@@ -14,6 +14,19 @@ namespace Ecommerce.Negocio.Services
     {
         private readonly ApplicationDbContext _context;
 
+        // Mapeo: DB int → string legible para el frontend
+        private static readonly Dictionary<int, string> EstadoMap = new()
+        {
+            { 0, "Creado" },
+            { 1, "Pagado" },
+            { 2, "Enviado" },
+            { 3, "Completado" },
+            { 4, "Cancelado" }
+        };
+
+        private static readonly Dictionary<string, int> EstadoReverseMap = 
+            EstadoMap.ToDictionary(kv => kv.Value, kv => kv.Key);
+
         public PedidoAdminService(ApplicationDbContext context)
         {
             _context = context;
@@ -38,16 +51,15 @@ namespace Ecommerce.Negocio.Services
 
         public async Task<PedidoDto> ActualizarEstadoPedidoAsync(int pedidoId, string nuevoEstado)
         {
-            var validStates = new List<string> { "Creado", "Pagado", "Enviado", "Completado", "Cancelado" };
-            if (!validStates.Contains(nuevoEstado))
+            if (!EstadoReverseMap.ContainsKey(nuevoEstado))
             {
-                throw new ArgumentException("Estado no válido.");
+                throw new ArgumentException($"Estado no válido: '{nuevoEstado}'. Valores válidos: {string.Join(", ", EstadoReverseMap.Keys)}");
             }
 
             var pedido = await _context.Pedidos.FindAsync(pedidoId);
             if (pedido == null) throw new KeyNotFoundException("Pedido no encontrado.");
 
-            pedido.Estado = nuevoEstado;
+            pedido.Estado = EstadoReverseMap[nuevoEstado];
             _context.Pedidos.Update(pedido);
             await _context.SaveChangesAsync();
             return MapToDto(pedido);
@@ -58,12 +70,12 @@ namespace Ecommerce.Negocio.Services
             var pedido = await _context.Pedidos.FindAsync(pedidoId);
             if (pedido == null) return false;
 
-            if (pedido.Estado == "Completado" || pedido.Estado == "Cancelado")
+            if (pedido.Estado == 3 || pedido.Estado == 4) // Completado o Cancelado
             {
                  throw new InvalidOperationException("El pedido ya está completado o cancelado y no puede modificarse.");
             }
 
-            pedido.Estado = "Cancelado";
+            pedido.Estado = 4; // Cancelado
             
             _context.Pedidos.Update(pedido);
             await _context.SaveChangesAsync();
@@ -75,12 +87,12 @@ namespace Ecommerce.Negocio.Services
             return new PedidoDto
             {
                 Id = p.Id,
-                FechaCreacion = p.FechaPedido,
-                Estado = p.Estado,
-                UsuarioId = string.Empty, // TODO: No implementado en la entidad aún
+                FechaPedido = p.FechaPedido,
+                Estado = EstadoMap.GetValueOrDefault(p.Estado, "Desconocido"),
+                UsuarioId = p.UsuarioId,
                 Total = p.Total,
                 CostoEnvio = p.CostoEnvioPagado,
-                DireccionEntrega = string.Empty // TODO: No implementado en la entidad aún
+                DireccionEntrega = p.DireccionEnvioSnapshot
             };
         }
     }

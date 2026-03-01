@@ -1,6 +1,8 @@
 using Ecommerce.Datos.Context;
+using Ecommerce.Datos.Entity;
 using Ecommerce.Negocio.Interfaces;
 using Ecommerce.Negocio.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,26 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configuración de ASP.NET Core Identity
+builder.Services.AddIdentity<Usuario, IdentityRole>(options =>
+{
+    // Configuraciones opcionales para contraseñas, bloqueos, etc.
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 // Inyección de dependencias (BLL)
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
@@ -31,6 +53,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

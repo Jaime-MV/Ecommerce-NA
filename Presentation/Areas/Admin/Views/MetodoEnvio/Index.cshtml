@@ -64,8 +64,8 @@
                         <input type="number" class="form-input" id="costo" placeholder="0.00" required step="0.01" min="0" />
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="tiempoEntrega">Tiempo estimado</label>
-                        <input type="text" class="form-input" id="tiempoEntrega" placeholder="Ej: 2-3 días hábiles" />
+                        <label class="form-label" for="tiempoEstimado">Tiempo estimado</label>
+                        <input type="text" class="form-input" id="tiempoEstimado" placeholder="Ej: 2-3 días hábiles" />
                     </div>
                 </div>
                 <div class="form-hint" style="margin-top:-8px;">
@@ -122,7 +122,7 @@ function renderTable(data) {
                 </div>
             </td>
             <td class="cell-bold">${formatCurrency(m.costo)}</td>
-            <td class="cell-muted">${m.tiempoEntrega || '—'}</td>
+            <td class="cell-muted">${m.tiempoEstimado || '—'}</td>
             <td>
                 <div class="cell-actions">
                     <button class="btn-admin btn-ghost btn-icon" title="Editar" onclick="openEditModal(${m.id})">
@@ -149,7 +149,7 @@ function openCreateModal() {
     document.getElementById('envioId').value = '';
     document.getElementById('nombre').value = '';
     document.getElementById('costo').value = '';
-    document.getElementById('tiempoEntrega').value = '';
+    document.getElementById('tiempoEstimado').value = '';
     openModal('envioModal');
     lucide.createIcons();
 }
@@ -161,7 +161,7 @@ function openEditModal(id) {
     document.getElementById('envioId').value = m.id;
     document.getElementById('nombre').value = m.nombre;
     document.getElementById('costo').value = m.costo;
-    document.getElementById('tiempoEntrega').value = m.tiempoEntrega || '';
+    document.getElementById('tiempoEstimado').value = m.tiempoEstimado || '';
     openModal('envioModal');
     lucide.createIcons();
 }
@@ -172,7 +172,7 @@ async function handleSubmit(e) {
     const data = {
         nombre: document.getElementById('nombre').value.trim(),
         costo: parseFloat(document.getElementById('costo').value),
-        tiempoEntrega: document.getElementById('tiempoEntrega').value.trim() || null
+        tiempoEstimado: document.getElementById('tiempoEstimado').value.trim() || null
     };
 
     try {

@@ -1,8 +1,994 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Ecommerce.Datos.Entity.Producto>
+@{
+    ViewData["Title"] = "Inicio";
+    Layout = null;
 }
+@using Microsoft.AspNetCore.Identity
+@using Ecommerce.Datos.Entity
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Calzado premium para hombre y mujer. Encuentra tu talla y estilo perfecto." />
+    <title>Ecommerce NA — Calzado Premium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+        :root {
+            --bg:        #0a0a0b;
+            --surface:   #111113;
+            --surface2:  #161618;
+            --border:    rgba(255,255,255,0.08);
+            --gold:      #c9a96e;
+            --gold-dim:  #8a6d3b;
+            --gold-pale: rgba(201,169,110,0.12);
+            --text:      #e8e3db;
+            --muted:     #6b6560;
+            --light:     #a09890;
+            --nav-h:     70px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* ── NOISE OVERLAY ── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+        }
+
+        /* ══════════════════════════════
+           NAV
+        ══════════════════════════════ */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: var(--nav-h);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 3.5rem;
+            background: rgba(10,10,11,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.45rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold);
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex; align-items: center; gap: 2.2rem;
+            list-style: none;
+        }
+        .nav-links a {
+            font-size: 0.78rem;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: var(--light);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--gold); }
+        .nav-links .nav-cta {
+            padding: 0.5rem 1.2rem;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            border-radius: 1px;
+            transition: background 0.25s, color 0.25s;
+        }
+        .nav-links .nav-cta:hover { background: var(--gold); color: var(--bg); }
+
+        /* ══════════════════════════════
+           HERO
+        ══════════════════════════════ */
+        .hero {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: flex; align-items: center;
+            padding: var(--nav-h) 3.5rem 0;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 70% 80% at 70% 40%, rgba(201,169,110,0.07) 0%, transparent 55%),
+                radial-gradient(ellipse 40% 50% at 5% 90%, rgba(140,110,60,0.06) 0%, transparent 60%),
+                linear-gradient(160deg, #0a0a0b 0%, #111113 100%);
+        }
+        /* Decorative lines */
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            width: 50%;
+            border-left: 1px solid var(--border);
+            background: linear-gradient(180deg, transparent 0%, rgba(201,169,110,0.03) 50%, transparent 100%);
+        }
+
+        .hero-content {
+            position: relative; z-index: 2;
+            max-width: 620px;
+            animation: fadeUp 1s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .hero-eyebrow {
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .hero-eyebrow::before {
+            content: '';
+            display: inline-block;
+            width: 32px; height: 1px;
+            background: var(--gold-dim);
+        }
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(3.5rem, 7vw, 6rem);
+            font-weight: 300;
+            line-height: 1.02;
+            letter-spacing: -0.01em;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+        .hero-title em {
+            font-style: italic;
+            color: var(--gold);
+        }
+        .hero-desc {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--light);
+            max-width: 460px;
+            margin-bottom: 3rem;
+        }
+        .hero-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .btn-primary-gold {
+            display: inline-block;
+            padding: 0.9rem 2.4rem;
+            background: var(--gold);
+            color: var(--bg);
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 1px;
+            transition: opacity 0.25s, transform 0.25s;
+        }
+        .btn-primary-gold:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-outline-gold {
+            display: inline-block;
+            padding: 0.9rem 2.4rem;
+            border: 1px solid var(--border);
+            color: var(--light);
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 1px;
+            transition: border-color 0.25s, color 0.25s;
+        }
+        .btn-outline-gold:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* Stats strip */
+        .hero-stats {
+            position: absolute; bottom: 4rem; left: 3.5rem; right: 3.5rem; z-index: 2;
+            display: flex; gap: 3rem;
+            animation: fadeUp 1s 0.3s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .stat { border-left: 1px solid var(--border); padding-left: 1.5rem; }
+        .stat-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 300;
+            color: var(--gold);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-top: 0.3rem;
+        }
+
+        /* ══════════════════════════════
+           CATEGORY STRIP
+        ══════════════════════════════ */
+        .categories {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            min-height: 70vh;
+        }
+        .cat-card {
+            position: relative;
+            display: flex; align-items: flex-end;
+            padding: 3rem 3.5rem;
+            overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .cat-card:first-child { border-right: 1px solid var(--border); }
+        .cat-card-bg {
+            position: absolute; inset: 0;
+            transition: transform 0.7s cubic-bezier(0.22,1,0.36,1);
+        }
+        .cat-card:hover .cat-card-bg { transform: scale(1.04); }
+        .cat-men .cat-card-bg {
+            background:
+                linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
+                linear-gradient(135deg, #1a1510 0%, #1e1b15 50%, #141210 100%);
+        }
+        .cat-women .cat-card-bg {
+            background:
+                linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
+                linear-gradient(135deg, #151015 0%, #1a1218 50%, #100f12 100%);
+        }
+        .cat-unisex .cat-card-bg {
+            background:
+                linear-gradient(to top, rgba(10,10,11,0.92) 0%, rgba(10,10,11,0.3) 60%, transparent 100%),
+                linear-gradient(135deg, #121516 0%, #17181a 50%, #0d0f11 100%);
+        }
+        /* Geometric accent */
+        .cat-card::before {
+            content: '';
+            position: absolute; top: 2rem; right: 2.5rem; z-index: 2;
+            width: 60px; height: 60px;
+            border-top: 1px solid var(--gold-dim);
+            border-right: 1px solid var(--gold-dim);
+            opacity: 0;
+            transform: translate(6px,-6px);
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        .cat-card:hover::before { opacity: 1; transform: translate(0,0); }
+        .cat-content { position: relative; z-index: 2; }
+        .cat-label {
+            font-size: 0.68rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 0.6rem;
+        }
+        .cat-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.2rem;
+            font-weight: 300;
+            color: var(--text);
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        .cat-arrow {
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            transition: color 0.25s, gap 0.25s;
+        }
+        .cat-card:hover .cat-arrow { color: var(--gold); gap: 1rem; }
+        .cat-arrow::after { content: '→'; }
+
+        /* ══════════════════════════════
+           FEATURES SECTION
+        ══════════════════════════════ */
+        .section-gap { padding: 7rem 3.5rem; position: relative; z-index: 1; }
+        .section-header {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            margin-bottom: 4rem;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .section-eyebrow {
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 0.8rem;
+        }
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 300;
+            line-height: 1.1;
+            color: var(--text);
+        }
+
+        /* Features grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: var(--border);
+        }
+        .feat-card {
+            background: var(--surface);
+            padding: 2.8rem 2.4rem;
+            transition: background 0.3s;
+        }
+        .feat-card:hover { background: var(--surface2); }
+        .feat-icon {
+            width: 44px; height: 44px;
+            margin-bottom: 1.8rem;
+            color: var(--gold);
+        }
+        .feat-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.8rem;
+        }
+        .feat-desc {
+            font-size: 0.875rem;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        /* ══════════════════════════════
+           MARQUEE STRIP
+        ══════════════════════════════ */
+        .marquee-wrap {
+            position: relative; z-index: 1;
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 1.4rem 0;
+            background: var(--surface);
+        }
+        .marquee-track {
+            display: flex; gap: 0;
+            animation: marquee 28s linear infinite;
+            white-space: nowrap;
+        }
+        .marquee-item {
+            display: inline-flex; align-items: center; gap: 2rem;
+            padding: 0 2.5rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .marquee-dot {
+            display: inline-block;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: var(--gold-dim);
+        }
+        @@keyframes marquee {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+
+        /* ══════════════════════════════
+           PROMISE / CTA SECTION
+        ══════════════════════════════ */
+        .cta-section {
+            position: relative; z-index: 1;
+            padding: 8rem 3.5rem;
+            text-align: center;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,169,110,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .cta-section .section-eyebrow { margin-bottom: 1.4rem; }
+        .cta-big {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.8rem, 6vw, 5.5rem);
+            font-weight: 300;
+            line-height: 1.05;
+            color: var(--text);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .cta-big em { color: var(--gold); font-style: italic; }
+        .cta-sub {
+            font-size: 0.95rem;
+            color: var(--light);
+            max-width: 480px;
+            margin: 0 auto 3rem;
+            line-height: 1.7;
+        }
+
+        /* ══════════════════════════════
+           FOOTER
+        ══════════════════════════════ */
+        footer {
+            position: relative; z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 3rem 3.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 1.5rem;
+            background: var(--bg);
+        }
+        .footer-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 300;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+        .footer-copy {
+            font-size: 0.78rem;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+        }
+        .footer-links {
+            display: flex; gap: 2rem; list-style: none;
+        }
+        .footer-links a {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--gold); }
+
+        /* ══════════════════════════════
+           PRODUCTOS
+        ══════════════════════════════ */
+        .products-section {
+            position: relative; z-index: 1;
+            padding: 7rem 3.5rem;
+            background: var(--bg);
+        }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5px;
+            background: var(--border);
+        }
+        .product-card {
+            background: var(--surface);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card:hover { background: var(--surface2); }
+        .product-img-wrap {
+            position: relative;
+            aspect-ratio: 4/3;
+            background: #1a1810;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .product-img-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1);
+        }
+        .product-card:hover .product-img-wrap img { transform: scale(1.06); }
+        .product-no-img {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            gap: 0.5rem;
+        }
+        .product-no-img svg { color: var(--gold-dim); opacity: 0.5; }
+        .product-no-img span { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+        .product-badge {
+            position: absolute; top: 1rem; left: 1rem;
+            background: var(--gold);
+            color: var(--bg);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 1px;
+        }
+        .product-badge-agotado {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(224,90,90,0.85);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 1px;
+        }
+        .product-body {
+            padding: 1.4rem 1.6rem 1.8rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .product-cat {
+            font-size: 0.68rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+        }
+        .product-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: var(--text);
+            line-height: 1.25;
+        }
+        .product-colors {
+            display: flex; gap: 5px; flex-wrap: wrap;
+            margin-top: 0.2rem;
+        }
+        .color-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+        .product-footer {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            margin-top: auto;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+        .product-price {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: var(--gold);
+        }
+        .product-price-orig {
+            font-size: 0.82rem;
+            color: var(--muted);
+            text-decoration: line-through;
+            margin-bottom: 0.1rem;
+        }
+        .product-stock {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            text-align: right;
+        }
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--muted);
+        }
+        .empty-state svg { color: var(--gold-dim); margin-bottom: 1rem; opacity: 0.4; }
+        .empty-state p { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; }
+
+        /* ══════════════════════════════
+           ANIMATIONS
+        ══════════════════════════════ */
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+
+        @@media (max-width: 1100px) {
+            .products-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @@media (max-width: 768px) {
+            .products-section { padding: 5rem 1.5rem; }
+            .products-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @@media (max-width: 480px) {
+            .products-grid { grid-template-columns: 1fr; }
+        }
+
+        @@media (max-width: 768px) {
+            nav { padding: 0 1.5rem; }
+            .hero { padding: calc(var(--nav-h) + 2rem) 1.5rem 6rem; }
+            .hero-stats { flex-wrap: wrap; left: 1.5rem; right: 1.5rem; gap: 2rem; }
+            .categories { grid-template-columns: 1fr; }
+            .cat-card:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+            .cat-card { min-height: 40vh; }
+            .section-gap { padding: 5rem 1.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .cta-section { padding: 5rem 1.5rem; }
+            footer { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── NAV ── -->
+    <nav>
+        <a href="/" class="nav-brand">Ecommerce NA</a>
+        <ul class="nav-links">
+            <li><a href="#productos">Colección</a></li>
+            <li><a href="#nosotros">Nosotros</a></li>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var usuario = await UserManager.GetUserAsync(User);
+                <li><a href="#">@(usuario?.NombreCompleto ?? usuario?.UserName ?? "Mi cuenta")</a></li>
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                        <button type="submit" class="nav-cta" style="background:none;font-family:'DM Sans',sans-serif;font-size:0.78rem;letter-spacing:0.13em;text-transform:uppercase;cursor:pointer;border-width:1px;">Salir</button>
+                    </form>
+                </li>
+            }
+            else
+            {
+                <li><a asp-controller="Account" asp-action="Login">Iniciar sesión</a></li>
+                <li><a asp-controller="Account" asp-action="Register" class="nav-cta">Registrarse</a></li>
+            }
+        </ul>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="hero-eyebrow">Nueva Temporada 2026</div>
+            <h1 class="hero-title">
+                El calzado<br>que <em>define</em><br>tu estilo
+            </h1>
+            <p class="hero-desc">
+                Cada par cuenta una historia. Descubre nuestra colección de calzado premium con variantes exactas por talla y color, disponibles solo mientras dure el stock.
+            </p>
+            <div class="hero-actions">
+                <a href="#categorias" class="btn-primary-gold">Ver Colección</a>
+                @if (!SignInManager.IsSignedIn(User))
+                {
+                    <a asp-controller="Account" asp-action="Register" class="btn-outline-gold">Crear Cuenta</a>
+                }
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-number">+200</div>
+                <div class="stat-label">Modelos disponibles</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2</div>
+                <div class="stat-label">Géneros — Hombre & Mujer</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Stock garantizado</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── MARQUEE ── -->
+    <div class="marquee-wrap">
+        <div class="marquee-track">
+            @for (int i = 0; i < 2; i++)
+            {
+                <span class="marquee-item">Calzado Premium <span class="marquee-dot"></span></span>
+                <span class="marquee-item">Envío Directo <span class="marquee-dot"></span></span>
+                <span class="marquee-item">Stock Exacto por Talla <span class="marquee-dot"></span></span>
+                <span class="marquee-item">Hombre & Mujer <span class="marquee-dot"></span></span>
+                <span class="marquee-item">Compra Segura <span class="marquee-dot"></span></span>
+                <span class="marquee-item">Temporada 2026 <span class="marquee-dot"></span></span>
+                <span class="marquee-item">Descuentos Exclusivos <span class="marquee-dot"></span></span>
+            }
+        </div>
+    </div>
+
+    <!-- ── CATEGORÍAS ── -->
+    <section id="categorias" class="categories">
+        <a href="#productos" class="cat-card cat-men" data-genero="Hombre">
+            <div class="cat-card-bg"></div>
+            <div class="cat-content">
+                <div class="cat-label">Colección</div>
+                <div class="cat-title">Hombre</div>
+                <div class="cat-arrow">Explorar</div>
+            </div>
+        </a>
+        <a href="#productos" class="cat-card cat-women" data-genero="Mujer">
+            <div class="cat-card-bg"></div>
+            <div class="cat-content">
+                <div class="cat-label">Colección</div>
+                <div class="cat-title">Mujer</div>
+                <div class="cat-arrow">Explorar</div>
+            </div>
+        </a>
+        <a href="#productos" class="cat-card cat-unisex" data-genero="Unisex">
+            <div class="cat-card-bg"></div>
+            <div class="cat-content">
+                <div class="cat-label">Colección</div>
+                <div class="cat-title">Unisex</div>
+                <div class="cat-arrow">Explorar</div>
+            </div>
+        </a>
+    </section>
+
+    <!-- ── PRODUCTOS ── -->
+    <section id="productos" class="products-section">
+        <div class="section-header">
+            <div>
+                <div class="section-eyebrow reveal">Catálogo</div>
+                <h2 class="section-title reveal reveal-delay-1">Últimos productos<br>disponibles</h2>
+            </div>
+            <a href="#productos" class="btn-outline-gold reveal reveal-delay-1 btn-ver-todo" style="white-space:nowrap">Ver todo el catálogo</a>
+        </div>
+        <div class="products-grid">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var p in Model)
+                {
+                    var precioFinal = p.PorcentajeDescuento > 0
+                        ? p.PrecioOriginal * (1 - (decimal)p.PorcentajeDescuento / 100)
+                        : p.PrecioOriginal;
+                    var stockTotal = p.Variantes.Sum(v => v.Stock);
+                    var colores = p.Variantes
+                        .Where(v => v.Stock > 0 && !string.IsNullOrEmpty(v.Color))
+                        .Select(v => v.Color!)
+                        .Distinct()
+                        .Take(6)
+                        .ToList();
+                    var placeholders = new[] {
+                        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1551107696-a4b0c5a0d1a6?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?q=80&w=600&auto=format&fit=crop",
+                        "https://images.unsplash.com/photo-1605348532760-6753d2c43329?q=80&w=600&auto=format&fit=crop"
+                    };
+                    var fallbackImg = placeholders[p.Id % placeholders.Length];
+                    <div class="product-card reveal" data-genero="@(p.Genero?.ToLower() ?? "unisex")">
+                        <div class="product-img-wrap">
+                            <img src="@(string.IsNullOrEmpty(p.ImagenUrl) ? fallbackImg : p.ImagenUrl)" 
+                                 alt="@p.Nombre" loading="lazy" 
+                                 onerror="this.onerror=null; this.src='@fallbackImg';" />
+                            @if (p.PorcentajeDescuento > 0)
+                            {
+                                <div class="product-badge">-@p.PorcentajeDescuento%</div>
+                            }
+                            @if (stockTotal == 0)
+                            {
+                                <div class="product-badge-agotado">Agotado</div>
+                            }
+                        </div>
+                        <div class="product-body">
+                            <div class="product-cat">@p.Categoria?.Nombre — @(p.Genero ?? "Universal")</div>
+                            <div class="product-name">@p.Nombre</div>
+                            @if (colores.Any())
+                            {
+                                <div class="product-colors">
+                                    @foreach (var color in colores)
+                                    {
+                                        <span class="color-dot" title="@color"
+                                              style="background: @(color.ToLower() switch {
+                                                  "negro" or "black" => "#222",
+                                                  "blanco" or "white" => "#f0f0f0",
+                                                  "rojo" or "red" => "#c0392b",
+                                                  "azul" or "blue" => "#2980b9",
+                                                  "café" or "brown" or "caffe" => "#6d4c2a",
+                                                  "gris" or "gray" or "grey" => "#7f8c8d",
+                                                  "beige" => "#d2b48c",
+                                                  "verde" or "green" => "#27ae60",
+                                                  "amarillo" or "yellow" => "#f1c40f",
+                                                  "naranja" or "orange" => "#e67e22",
+                                                  "morado" or "purple" => "#8e44ad",
+                                                  "rosa" or "pink" => "#e91e8c",
+                                                  "dorado" or "gold" => "#c9a96e",
+                                                  _ => "#555"
+                                              });"></span>
+                                    }
+                                </div>
+                            }
+                            <div class="product-footer">
+                                <div>
+                                    @if (p.PorcentajeDescuento > 0)
+                                    {
+                                        <div class="product-price-orig">$@p.PrecioOriginal.ToString("N2")</div>
+                                    }
+                                    <div class="product-price">$@precioFinal.ToString("N2")</div>
+                                </div>
+                                <div class="product-stock">
+                                    @if (stockTotal > 0)
+                                    {
+                                        <span>@stockTotal uds.</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#e05a5a">Sin stock</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="display:block;margin:0 auto 1rem">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <p>Aún no hay productos en el catálogo.</p>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- ── FEATURES ── -->
+    <section id="nosotros" class="section-gap" style="background: var(--bg);">
+        <div class="section-header">
+            <div>
+                <div class="section-eyebrow reveal">Por qué elegirnos</div>
+                <h2 class="section-title reveal reveal-delay-1">Experiencia de compra<br>sin fricciones</h2>
+            </div>
+        </div>
+        <div class="features-grid">
+            <div class="feat-card reveal">
+                <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+                <div class="feat-title">Stock en tiempo real</div>
+                <p class="feat-desc">Cada variante de talla y color tiene su propio inventario. Si está disponible, es tuyo. Sin sorpresas ni ventas de productos agotados.</p>
+            </div>
+            <div class="feat-card reveal reveal-delay-1">
+                <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                <div class="feat-title">Envíos a tu medida</div>
+                <p class="feat-desc">Selecciona entre múltiples métodos de envío según tu presupuesto y urgencia. Guarda varias direcciones de entrega en tu perfil.</p>
+            </div>
+            <div class="feat-card reveal reveal-delay-2">
+                <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <div class="feat-title">Compra 100% segura</div>
+                <p class="feat-desc">Autenticación robusta con ASP.NET Core Identity. Tu historial de pedidos y datos personales están siempre protegidos.</p>
+            </div>
+            <div class="feat-card reveal">
+                <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+                <div class="feat-title">Carrito persistente</div>
+                <p class="feat-desc">Tu carrito se guarda en la base de datos. Cierra sesión y cuando vuelvas, tus artículos te estarán esperando.</p>
+            </div>
+            <div class="feat-card reveal reveal-delay-1">
+                <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                <div class="feat-title">Seguimiento de pedido</div>
+                <p class="feat-desc">Monitorea el estado de cada pedido: Creado → Pagado → Enviado. Historial completo e inmutable en tu cuenta.</p>
+            </div>
+            <div class="feat-card reveal reveal-delay-2">
+                <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <div class="feat-title">Descuentos exclusivos</div>
+                <p class="feat-desc">Promociones con tiempo de vigencia. El precio final se calcula automáticamente; el sistema no acepta precios manipulados desde la interfaz.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CTA ── -->
+    <section class="cta-section">
+        <div class="section-eyebrow reveal">Tu próximo paso</div>
+        <h2 class="cta-big reveal reveal-delay-1">
+            Encuentra tu par <em>perfecto</em>
+        </h2>
+        <p class="cta-sub reveal reveal-delay-2">
+            Regístrate gratis y accede a toda la colección, gestiona tus direcciones y sigue tus pedidos en tiempo real.
+        </p>
+        <div class="reveal reveal-delay-2">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <a href="#categorias" class="btn-primary-gold">Ver Colección</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Register" class="btn-primary-gold">Crear Cuenta Gratis</a>
+            }
+        </div>
+    </section>
+
+    <!-- ── FOOTER ── -->
+    <footer>
+        <div class="footer-brand">Ecommerce NA</div>
+        <ul class="footer-links">
+            <li><a href="#">Catálogo</a></li>
+            <li><a href="#">Tallas</a></li>
+            <li><a asp-controller="Home" asp-action="Privacy">Privacidad</a></li>
+        </ul>
+        <p class="footer-copy">&copy; 2026 Ecommerce NA. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Intersection Observer para animaciones reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(el => {
+                if (el.isIntersecting) {
+                    el.target.classList.add('visible');
+                    observer.unobserve(el.target);
+                }
+            });
+        }, { threshold: 0.12 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Filtro de categorías
+        const catCards = document.querySelectorAll('.cat-card');
+        const productCards = document.querySelectorAll('.product-card');
+        const btnVerTodo = document.querySelector('.btn-ver-todo');
+
+        catCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const targetGenero = card.getAttribute('data-genero').trim().toLowerCase();
+
+                productCards.forEach(pCard => {
+                    const originalProductGenero = pCard.getAttribute('data-genero') || "";
+                    const productGenero = originalProductGenero.trim().toLowerCase();
+                    
+                    let match = false;
+                    if (targetGenero === 'hombre') {
+                        match = (productGenero === 'hombre' || productGenero === 'masculino');
+                    } else if (targetGenero === 'mujer') {
+                        match = (productGenero === 'mujer' || productGenero === 'femenino');
+                    } else {
+                        // Unisex
+                        match = (productGenero === targetGenero);
+                    }
+
+                    if (match) {
+                        pCard.style.display = 'flex';
+                    } else {
+                        pCard.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Ver todo el catálogo (restaurar filtro)
+        if (btnVerTodo) {
+            btnVerTodo.addEventListener('click', (e) => {
+                productCards.forEach(pCard => {
+                    pCard.style.display = 'flex';
+                });
+            });
+        }
+    </script>
+</body>
+</html>

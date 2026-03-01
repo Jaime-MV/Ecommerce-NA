@@ -43,10 +43,11 @@ namespace Ecommerce.Negocio.Services
             var producto = new Producto
             {
                 Nombre = dto.Nombre,
-                Descripcion = dto.SKU,
-                PrecioBase = dto.PrecioBase,
+                Descripcion = dto.Descripcion,
+                PrecioOriginal = dto.PrecioOriginal,
                 CategoriaId = dto.CategoriaId,
-                ImagenUrl = dto.ImagenUrl
+                ImagenUrl = dto.ImagenUrl,
+                Genero = dto.Genero
             };
 
             _context.Productos.Add(producto);
@@ -60,10 +61,11 @@ namespace Ecommerce.Negocio.Services
             if (producto == null) throw new KeyNotFoundException("Producto no encontrado");
 
             producto.Nombre = dto.Nombre;
-            producto.Descripcion = dto.SKU;
-            producto.PrecioBase = dto.PrecioBase;
+            producto.Descripcion = dto.Descripcion;
+            producto.PrecioOriginal = dto.PrecioOriginal;
             producto.CategoriaId = dto.CategoriaId;
             producto.ImagenUrl = dto.ImagenUrl;
+            producto.Genero = dto.Genero;
 
             _context.Productos.Update(producto);
             await _context.SaveChangesAsync();
@@ -100,20 +102,21 @@ namespace Ecommerce.Negocio.Services
             {
                 Id = p.Id,
                 Nombre = p.Nombre,
-                SKU = p.Descripcion,
-                PrecioBase = p.PrecioBase,
+                Descripcion = p.Descripcion,
+                PrecioOriginal = p.PrecioOriginal,
                 ImagenUrl = p.ImagenUrl,
+                Genero = p.Genero,
                 CategoriaId = p.CategoriaId,
                 CategoriaNombre = p.Categoria?.Nombre,
                 PorcentajeDescuento = p.PorcentajeDescuento,
+                OfertaFin = p.OfertaFin,
                 Variantes = p.Variantes?.Select(v => new ProductoVarianteDto
                 {
                     Id = v.Id,
                     Talla = v.Talla,
                     Color = v.Color,
                     Stock = v.Stock,
-                    ProductoId = v.ProductoId,
-                    Activo = v.Activo
+                    ProductoId = v.ProductoId
                 }).ToList() ?? new List<ProductoVarianteDto>()
             };
         }

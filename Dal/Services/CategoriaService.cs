@@ -37,8 +37,7 @@ namespace Ecommerce.Negocio.Services
         {
             var categoria = new Categoria
             {
-                Nombre = dto.Nombre,
-                Descripcion = dto.Descripcion
+                Nombre = dto.Nombre
             };
 
             _context.Categorias.Add(categoria);
@@ -52,7 +51,6 @@ namespace Ecommerce.Negocio.Services
             if (categoria == null) throw new KeyNotFoundException("Categoría no encontrada");
 
             categoria.Nombre = dto.Nombre;
-            categoria.Descripcion = dto.Descripcion;
 
             _context.Categorias.Update(categoria);
             await _context.SaveChangesAsync();
@@ -67,7 +65,6 @@ namespace Ecommerce.Negocio.Services
             
             if (categoria == null) return false;
 
-            // Validar que no tenga productos asociados antes de borrar
             if (categoria.Productos != null && categoria.Productos.Any())
             {
                 throw new InvalidOperationException("No se puede eliminar la categoría porque tiene productos asociados.");
@@ -83,8 +80,7 @@ namespace Ecommerce.Negocio.Services
             return new CategoriaDto
             {
                 Id = c.Id,
-                Nombre = c.Nombre,
-                Descripcion = c.Descripcion
+                Nombre = c.Nombre
             };
         }
     }

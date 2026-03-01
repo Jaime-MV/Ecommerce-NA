@@ -41,21 +41,51 @@ Si usas **VS Code**, esta es la mejor opción para desarrollar. Obtiene el SDK `
 
 ### Requisitos
 - [VS Code](https://code.visualstudio.com/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- Extensión: [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (debe estar corriendo)
+
+### ⚠️ Extensión correcta (MUY IMPORTANTE)
+
+Necesitas la extensión **"Dev Containers"**, NO la extensión "Docker". Son dos extensiones diferentes:
+
+| Extensión | ID | ¿Es esta? |
+|---|---|---|
+| ❌ Docker | `ms-azuretools.vscode-docker` | NO — esta solo gestiona contenedores |
+| ✅ **Dev Containers** | `ms-vscode-remote.remote-containers` | **SÍ — esta es la correcta** |
+
+**Instala la extensión correcta con uno de estos métodos:**
+
+```bash
+# Desde la terminal:
+code --install-extension ms-vscode-remote.remote-containers
+```
+
+O busca **"Dev Containers"** en el marketplace de extensiones de VS Code (autor: Microsoft).
+
+Enlace directo: [Dev Containers en Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
 ### Pasos
-1. Clona el repositorio y ábrelo en VS Code
-2. VS Code detectará el archivo `.devcontainer/devcontainer.json` y mostrará un mensaje:
+1. Asegúrate de que **Docker Desktop** esté abierto y corriendo
+2. Clona el repositorio y ábrelo en VS Code
+3. VS Code detectará el archivo `.devcontainer/devcontainer.json` y mostrará un mensaje:
    > *"Reopen in Container"*
-3. Haz clic en **"Reopen in Container"**
-4. Espera a que se construya el contenedor (~2-3 minutos la primera vez)
-5. Una vez dentro, ejecuta:
+4. Haz clic en **"Reopen in Container"**
+5. Espera a que se construya el contenedor (~2-3 minutos la primera vez)
+6. Una vez dentro, ejecuta:
    ```bash
    cd Presentation
    dotnet run
    ```
-6. Abre http://localhost:5270/Admin/Dashboard
+7. Abre http://localhost:5270/Admin/Dashboard
+
+### 🔧 Si no aparece la notificación "Reopen in Container"
+
+Si ya instalaste la extensión correcta pero no sale el mensaje automático:
+
+1. Abre la **Paleta de Comandos** con `Ctrl + Shift + P` (o `Cmd + Shift + P` en Mac)
+2. Escribe: **"Dev Containers: Reopen in Container"**
+3. Selecciona esa opción y presiona Enter
+
+![Command Palette](https://code.visualstudio.com/assets/docs/devcontainers/containers/dev-containers-reopen.png)
 
 ---
 
