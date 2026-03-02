@@ -1,7 +1,11 @@
 @model IEnumerable<Ecommerce.Datos.Entity.Pedido>
+@using Microsoft.AspNetCore.Identity
+@using Ecommerce.Datos.Entity
+@inject SignInManager<Usuario> SignInManager
+@inject UserManager<Usuario> UserManager
 @{
     ViewData["Title"] = "Mis Pedidos";
-    Layout = null; // Para mantener el estilo consistente con las otras páginas que hicimos desde cero
+    Layout = null; 
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -10,195 +14,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mis Pedidos — Ecommerce NA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --bg:#0a0a0b; --surface:#111113; --surface2:#161618;
-            --border:rgba(255,255,255,0.08); --gold:#c9a96e; --gold-dim:#8a6d3b;
-            --gold-pale:rgba(201,169,110,0.12); --text:#e8e3db; --muted:#6b6560;
-            --light:#a09890; --nav-h:70px; --success:#4caf7d; --danger:#e05a5a;
-        }
-        html { scroll-behavior:smooth; }
-        body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; min-height:100vh; display:flex; flex-direction:column; }
-        body::before {
-            content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            --primary: #000000;
+            --secondary: #ffffff;
+            --accent: #ff6b00;
+            --surface: #f8f8f8;
+            --border: #e0e0e0;
+            --nav-h: 80px;
         }
 
-        nav {
-            position:fixed; top:0; left:0; right:0; z-index:100;
-            height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
-            padding:0 3.5rem; background:rgba(10,10,11,0.92); backdrop-filter:blur(20px);
-            border-bottom:1px solid var(--border);
-        }
-        .nav-brand { font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:300; letter-spacing:0.3em; text-transform:uppercase; color:var(--gold); text-decoration:none; }
-        .nav-back { font-size:0.78rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--light); text-decoration:none; display:flex; align-items:center; gap:0.5rem; transition:color 0.2s; }
-        .nav-back:hover { color:var(--gold); }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html { scroll-behavior: smooth; font-family: 'Inter', sans-serif; }
 
-        .page-header {
-            position:relative; z-index:1;
-            padding:calc(var(--nav-h) + 4rem) 3.5rem 2rem;
-            max-width:1000px; margin:0 auto; width:100%;
+        body { background: var(--secondary); color: var(--primary); -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* HEADER / NAV */
+        header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            height: var(--nav-h);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .page-eyebrow { font-size:0.7rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:0.8rem; }
-        .page-title { font-family:'Cormorant Garamond',serif; font-size:3rem; font-weight:300; color:var(--text); }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; text-transform: uppercase; letter-spacing: -0.02em; }
+        .nav-actions { display: flex; align-items: center; gap: 1rem; }
+        
+        .btn-outline {
+            padding: 0.6rem 1.5rem; border: 1px solid var(--primary); border-radius: 9999px;
+            color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+            transition: all 0.3s ease; background: transparent; cursor: pointer; display: inline-block;
+        }
+        .btn-outline:hover { background: var(--primary); color: var(--secondary); }
+        .btn-filled {
+            padding: 0.6rem 2.5rem; border: 1px solid var(--accent); border-radius: 9999px;
+            background: var(--accent); color: var(--secondary); text-decoration: none; 
+            font-size: 0.95rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; display: inline-block;
+        }
+        .btn-filled:hover { background: #e56000; border-color: #e56000; transform: translateY(-2px); }
+
+        /* PAGE HEADER */
+        .page-container {
+            flex: 1; padding: calc(var(--nav-h) + 40px) 40px 80px; max-width: 1000px; margin: 0 auto; width: 100%;
+        }
+        .page-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 40px; letter-spacing: -0.02em; }
 
         .orders-container {
-            position:relative; z-index:1;
-            max-width:1000px; margin:0 auto; width:100%;
-            padding:0 3.5rem 5rem; flex:1;
+            position: relative; z-index: 1; width: 100%; flex: 1; display: flex; flex-direction: column; gap: 30px;
         }
 
         .order-card {
-            background:var(--surface); border:1px solid var(--border); border-radius:1px;
-            margin-bottom:2rem; overflow:hidden;
-            animation: fadeUp 0.5s ease both;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            overflow: hidden; animation: fadeUp 0.5s ease both;
         }
 
         .order-header {
-            background:var(--surface2); border-bottom:1px solid var(--border);
-            padding:1.5rem 2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
+            background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border);
+            padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
         }
-        .order-header-col { display:flex; flex-direction:column; gap:0.3rem; }
-        .order-meta-lbl { font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
-        .order-meta-val { font-size:0.9rem; color:var(--text); }
-        .order-total-val { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:300; color:var(--gold); }
+        .order-header-col { display: flex; flex-direction: column; gap: 5px; }
+        .order-meta-lbl { font-size: 0.8rem; text-transform: uppercase; font-weight: 600; color: #666; letter-spacing: 0.05em; }
+        .order-meta-val { font-size: 1rem; font-weight: 500; color: var(--primary); }
+        .order-total-val { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
 
         .order-status {
-            display:inline-flex; align-items:center; gap:0.4rem;
-            padding:0.4rem 0.8rem; border-radius:2px; font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase;
-            background:rgba(76,175,125,0.1); color:var(--success); border:1px solid rgba(76,175,125,0.3);
+            display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 1rem; border-radius: 9999px; 
+            font-size: 0.8rem; font-weight: 600; text-transform: uppercase; background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;
         }
 
-        .order-items { padding:1.5rem 2rem; }
+        .order-items { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
         .order-item {
-            display:flex; gap:1.5rem; align-items:center;
-            padding:1rem 0; border-bottom:1px solid var(--border);
+            display: flex; gap: 20px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border);
         }
-        .order-item:last-child { border-bottom:none; padding-bottom:0; }
+        .order-item:last-child { border-bottom: none; padding-bottom: 0; }
         
-        .item-img { width:80px; height:80px; object-fit:cover; border-radius:1px; background:#1a1810; flex-shrink:0; }
-        .item-info { flex:1; }
-        .item-name { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:400; color:var(--text); margin-bottom:0.3rem;}
-        .item-meta { font-size:0.8rem; color:var(--muted); display:flex; gap:1rem; }
-        .item-price { font-size:0.9rem; color:var(--text); font-weight:500; }
+        .item-img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; background: #eee; flex-shrink: 0; }
+        .item-info { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .item-name { font-size: 1.15rem; font-weight: 600; color: var(--primary); }
+        .item-meta { font-size: 0.9rem; color: #555; display: flex; gap: 15px; }
+        .item-price { font-size: 1.1rem; font-weight: 600; }
 
-        .empty-state { text-align:center; padding:5rem 0; }
-        .empty-state svg { color:var(--gold-dim); opacity:0.35; margin-bottom:1.5rem; }
-        .empty-state h3 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; margin-bottom:1rem; }
-        .btn-shop {
-            display:inline-flex; align-items:center; gap:0.6rem;
-            padding:0.9rem 2.4rem; margin-top:1.5rem;
-            background:var(--gold); color:var(--bg);
-            font-size:0.78rem; font-weight:500; letter-spacing:0.18em; text-transform:uppercase;
-            text-decoration:none; border-radius:1px; transition:opacity 0.25s;
-        }
-        .btn-shop:hover { opacity:0.88; }
+        .empty-state { text-align: center; padding: 60px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+        .empty-state h3 { font-size: 2rem; font-weight: 700; margin-bottom: 15px; }
+        .empty-state p { color: #555; margin-bottom: 30px; font-size: 1.1rem; }
 
         @@keyframes fadeUp {
-            from { opacity:0; transform:translateY(16px); }
-            to   { opacity:1; transform:translateY(0); }
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        @@media (max-width:768px) {
-            nav, .page-header, .orders-container { padding-left:1.5rem; padding-right:1.5rem; }
-            .order-header { flex-direction:column; align-items:flex-start; }
-            .order-status { align-self:flex-start; margin-top:0.5rem; }
+        @@media (max-width: 768px) {
+            header { padding: 0 20px; }
+            .page-container { padding: calc(var(--nav-h) + 20px) 20px 40px; }
+            .order-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .order-status { align-self: flex-start; margin-top: 5px; }
+            .item-img { width: 70px; height: 70px; }
+            .order-item { flex-direction: column; align-items: flex-start; gap: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <nav>
+    <header>
         <a href="/" class="nav-brand">Ecommerce NA</a>
-        <a href="/#productos" class="nav-back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Volver a la tienda
-        </a>
-    </nav>
-
-    <div class="page-header">
-        <div class="page-eyebrow">Historial</div>
-        <h1 class="page-title">Mis Pedidos</h1>
-    </div>
-
-    <div class="orders-container">
-        @if (!Model.Any())
-        {
-            <div class="empty-state">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                    <line x1="8" y1="21" x2="16" y2="21"/>
-                    <line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
-                <h3>Aún no tienes pedidos</h3>
-                <p style="color:var(--muted)">Empieza a explorar nuestra colección de temporada.</p>
-                <a href="/#productos" class="btn-shop">Ver Colección</a>
-            </div>
-        }
-        else
-        {
-            int delay = 0;
-            foreach (var pedido in Model)
+        <div class="nav-actions">
+            @if (SignInManager.IsSignedIn(User))
             {
-                <div class="order-card" style="animation-delay:@(delay)s">
-                    <div class="order-header">
-                        <div class="order-header-col">
-                            <span class="order-meta-lbl">Pedido ID</span>
-                            <span class="order-meta-val">#@pedido.Id</span>
-                        </div>
-                        <div class="order-header-col">
-                            <span class="order-meta-lbl">Fecha</span>
-                            <span class="order-meta-val">@pedido.FechaPedido.ToString("dd MMM yyyy")</span>
-                        </div>
-                        <div class="order-header-col">
-                            <span class="order-meta-lbl">Envío</span>
-                            <span class="order-meta-val">@(pedido.MetodoEnvio?.Nombre ?? "Estándar")</span>
-                        </div>
-                        <div class="order-header-col">
-                            <span class="order-meta-lbl">Total</span>
-                            <span class="order-total-val">$@pedido.Total.ToString("N2")</span>
-                        </div>
-                        <div class="order-status">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                            @(pedido.Estado == 0 ? "Completado" : "En proceso")
-                        </div>
-                    </div>
-
-                    <div class="order-items">
-                        @foreach (var det in pedido.Detalles)
-                        {
-                            var prod = det.ProductoVariante.Producto;
-                            var imgSrc = string.IsNullOrEmpty(prod.ImagenUrl) 
-                                ? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop" 
-                                : prod.ImagenUrl;
-
-                            <div class="order-item">
-                                <img src="@imgSrc" class="item-img" alt="@prod.Nombre" onerror="this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop';" />
-                                <div class="item-info">
-                                    <h4 class="item-name">@prod.Nombre</h4>
-                                    <div class="item-meta">
-                                        <span>Talla: <strong style="color:var(--text)">@det.ProductoVariante.Talla</strong></span>
-                                        @if (det.ProductoVariante.Color != null && det.ProductoVariante.Color != "Único")
-                                        {
-                                            <span>Color: <strong style="color:var(--text)">@det.ProductoVariante.Color</strong></span>
-                                        }
-                                        <span>Cant: <strong style="color:var(--text)">@det.Cantidad</strong></span>
-                                    </div>
-                                </div>
-                                <div class="item-price">$@((det.PrecioUnitarioPagado * det.Cantidad).ToString("N2"))</div>
-                            </div>
-                        }
-                    </div>
-                </div>
-                delay += 1;
+                <a asp-controller="Account" asp-action="Perfil" class="btn-outline" style="border:none;">Perfil</a>
+                <a asp-controller="Carrito" asp-action="Index" class="btn-filled">Carrito</a>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                    <button type="submit" class="btn-outline">Salir</button>
+                </form>
             }
-        }
+        </div>
+    </header>
+
+    <div class="page-container">
+        <h1 class="page-title">Historial de Pedidos</h1>
+
+        <div class="orders-container">
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <h3>Aún no tienes pedidos</h3>
+                    <p>Empieza a explorar nuestra colección de temporada y descubre tu nuevo estilo.</p>
+                    <a href="/#productos" class="btn-filled">Explorar Colección</a>
+                </div>
+            }
+            else
+            {
+                int delay = 0;
+                foreach (var pedido in Model)
+                {
+                    <div class="order-card" style="animation-delay:@(delay * 0.1)s">
+                        <div class="order-header">
+                            <div class="order-header-col">
+                                <span class="order-meta-lbl">Pedido ID</span>
+                                <span class="order-meta-val">#@pedido.Id</span>
+                            </div>
+                            <div class="order-header-col">
+                                <span class="order-meta-lbl">Fecha de Pedido</span>
+                                <span class="order-meta-val">@pedido.FechaPedido.ToString("dd MMM yyyy")</span>
+                            </div>
+                            <div class="order-header-col">
+                                <span class="order-meta-lbl">Método de Envío</span>
+                                <span class="order-meta-val">@(pedido.MetodoEnvio?.Nombre ?? "Estándar")</span>
+                            </div>
+                            <div class="order-header-col">
+                                <span class="order-meta-lbl">Total Neto</span>
+                                <span class="order-total-val">$@pedido.Total.ToString("N2")</span>
+                            </div>
+                            <div class="order-status">
+                                @(pedido.Estado == 0 ? "Pedido Pagado y Completado" : "Procesando")
+                            </div>
+                        </div>
+
+                        <div class="order-items">
+                            @foreach (var det in pedido.Detalles)
+                            {
+                                var prod = det.ProductoVariante.Producto;
+                                var imgSrc = string.IsNullOrEmpty(prod.ImagenUrl) 
+                                    ? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop" 
+                                    : prod.ImagenUrl;
+
+                                <div class="order-item">
+                                    <img src="@imgSrc" class="item-img" alt="@prod.Nombre" onerror="this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop';" />
+                                    <div class="item-info">
+                                        <h4 class="item-name">@prod.Nombre</h4>
+                                        <div class="item-meta">
+                                            <span>Talla: <strong>@det.ProductoVariante.Talla</strong></span>
+                                            @if (det.ProductoVariante.Color != null && det.ProductoVariante.Color != "Único")
+                                            {
+                                                <span>Color: <strong>@det.ProductoVariante.Color</strong></span>
+                                            }
+                                            <span>Cantidades: <strong>@det.Cantidad un.</strong></span>
+                                        </div>
+                                    </div>
+                                    <div class="item-price">$@((det.PrecioUnitarioPagado * det.Cantidad).ToString("N2"))</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    delay += 1;
+                }
+            }
+        </div>
     </div>
 </body>
 </html>

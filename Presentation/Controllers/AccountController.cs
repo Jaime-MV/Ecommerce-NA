@@ -115,5 +115,122 @@ namespace Ecommerce.Presentacion.Controllers
 
             return View(pedidos);
         }
+
+        [HttpGet]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> Perfil()
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var usuario = await _userManager.FindByIdAsync(userId);
+            if (usuario == null) return NotFound("Usuario no encontrado.");
+
+            var direcciones = await _context.Set<DireccionUsuario>()
+                .Where(d => d.UsuarioId == userId)
+                .ToListAsync();
+
+            var model = new PerfilViewModel
+            {
+                Usuario = usuario,
+                Direcciones = direcciones
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AgregarTelefono(PerfilViewModel vm)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var usuario = await _userManager.FindByIdAsync(userId);
+
+            if (usuario != null && !string.IsNullOrWhiteSpace(vm.NuevoTelefono))
+            {
+                var result = await _userManager.SetPhoneNumberAsync(usuario, vm.NuevoTelefono);
+                if (!result.Succeeded)
+                {
+                    ModelState.AddModelError("", "No se pudo actualizar el teléfono.");
+                }
+            }
+            
+            return RedirectToAction(nameof(Perfil));
+        }
+
+        [HttpPost]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AgregarDireccion(PerfilViewModel vm)
+        {
+            var userId = _userManager.GetUserId(User)!;
+
+            ModelState.Remove("Usuario");
+            ModelState.Remove("Direcciones");
+
+            if (ModelState.IsValid)
+            {
+                var set = _context.Set<DireccionUsuario>();
+
+                if (vm.NuevaDireccion.EsPrincipal)
+                {
+                    // Update others
+                    var existings = await set.Where(d => d.UsuarioId == userId && d.EsPrincipal).ToListAsync();
+                    foreach (var e in existings) e.EsPrincipal = false;
+                }
+                else
+                {
+                    // Check if there are no addresses at all, make this main if so
+                    if (!await set.AnyAsync(d => d.UsuarioId == userId))
+                        vm.NuevaDireccion.EsPrincipal = true;
+                }
+
+                var dir = new DireccionUsuario
+                {
+                    UsuarioId = userId,
+                    NombreContacto = vm.NuevaDireccion.NombreContacto,
+                    DireccionCompleta = vm.NuevaDireccion.DireccionCompleta,
+                    Ciudad = vm.NuevaDireccion.Ciudad,
+                    EsPrincipal = vm.NuevaDireccion.EsPrincipal
+                };
+
+                set.Add(dir);
+                await _context.SaveChangesAsync();
+                
+                return RedirectToAction(nameof(Perfil));
+            }
+
+            // On failure, refill the model
+            var usuario = await _userManager.FindByIdAsync(userId);
+            vm.Usuario = usuario!;
+            vm.Direcciones = await _context.Set<DireccionUsuario>().Where(d => d.UsuarioId == userId).ToListAsync();
+            
+            return View(nameof(Perfil), vm);
+        }
+
+        [HttpPost]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EstablecerDireccionPrincipal(int id, string? returnUrl = null)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var set = _context.Set<DireccionUsuario>();
+
+            var addressSelected = await set.FirstOrDefaultAsync(d => d.Id == id && d.UsuarioId == userId);
+            
+            if (addressSelected != null)
+            {
+                var existings = await set.Where(d => d.UsuarioId == userId && d.EsPrincipal).ToListAsync();
+                foreach (var e in existings) e.EsPrincipal = false;
+
+                addressSelected.EsPrincipal = true;
+                await _context.SaveChangesAsync();
+            }
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            return RedirectToAction(nameof(Perfil));
+        }
     }
 }

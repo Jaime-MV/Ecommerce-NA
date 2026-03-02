@@ -1,0 +1,215 @@
+@model Ecommerce.Presentacion.Models.ViewModels.PerfilViewModel
+@{
+    ViewData["Title"] = "Mi Perfil";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perfil — Ecommerce NA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #000000;
+            --secondary: #ffffff;
+            --accent: #ff6b00;
+            --surface: #f8f8f8;
+            --border: #e0e0e0;
+            --nav-h: 80px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-family: 'Inter', sans-serif; background: var(--surface); color: var(--primary); -webkit-font-smoothing: antialiased; }
+
+        /* HEADER */
+        header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            height: var(--nav-h); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; text-transform: uppercase; letter-spacing: -0.02em; }
+        .nav-actions { display: flex; align-items: center; gap: 1rem; }
+        
+        .btn-outline {
+            padding: 0.6rem 1.5rem; border: 1px solid var(--primary); border-radius: 9999px;
+            color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+            transition: all 0.3s ease; background: transparent; cursor: pointer;
+        }
+        .btn-outline:hover { background: var(--primary); color: var(--secondary); }
+        .btn-filled {
+            padding: 0.6rem 1.5rem; border: 1px solid var(--accent); border-radius: 9999px;
+            background: var(--accent); color: var(--secondary); text-decoration: none; 
+            font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer;
+        }
+        .btn-filled:hover { background: #e56000; border-color: #e56000; transform: translateY(-2px); }
+
+        /* LAYOUT PERFIL */
+        .container { max-width: 1200px; margin: calc(var(--nav-h) + 40px) auto 80px; padding: 0 20px; }
+        .page-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 40px; letter-spacing: -0.02em; }
+
+        .profile-grid {
+            display: grid; grid-template-columns: 1fr 2fr; gap: 40px;
+        }
+
+        .card { background: var(--secondary); border: 1px solid var(--border); border-radius: 12px; padding: 30px; margin-bottom: 30px; }
+        .card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .info-label { font-weight: 500; color: #555; }
+        .info-value { font-weight: 600; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95rem; }
+        .form-control { 
+            width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 8px; 
+            font-family: inherit; font-size: 1rem; transition: border-color 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: var(--accent); }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+
+        .btn-submit { margin-top: 10px; width: 100%; text-align: center; }
+
+        .address-item { 
+            border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 15px; 
+            background: var(--surface); position: relative;
+        }
+        .address-item h4 { margin-bottom: 5px; font-size: 1.1rem; }
+        .address-item p { color: #555; font-size: 0.95rem; line-height: 1.5; }
+        .badge-main { 
+            position: absolute; top: 20px; right: 20px; background: var(--primary); color: var(--secondary); 
+            padding: 3px 10px; font-size: 0.75rem; border-radius: 9999px; font-weight: 600;
+        }
+
+        @@media (max-width: 992px) {
+            .profile-grid { grid-template-columns: 1fr; }
+        }
+        @@media (max-width: 768px) {
+            header { padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="/" class="nav-brand">Ecommerce NA</a>
+        <div class="nav-actions">
+            <a asp-controller="Home" asp-action="Index" class="btn-outline" style="border:none;">Inicio</a>
+            <a asp-controller="Account" asp-action="MisPedidos" class="btn-outline" style="border:none;">Mis pedidos</a>
+            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                <button type="submit" class="btn-outline">Salir</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Mi Cuenta</h1>
+
+        <div class="profile-grid">
+            <!-- COLUMNA IZQ: Datos Personales -->
+            <div>
+                <div class="card">
+                    <h3>Datos Personales</h3>
+                    <div class="info-row">
+                        <span class="info-label">Nombre:</span>
+                        <span class="info-value">@(Model.Usuario.NombreCompleto ?? "No especificado")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Usuario:</span>
+                        <span class="info-value">@Model.Usuario.UserName</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">@Model.Usuario.Email</span>
+                    </div>
+                    
+                    <div style="margin-top:20px; padding-top:20px; border-top: 1px solid var(--border);">
+                        <h4>Teléfono</h4>
+                        @if (!string.IsNullOrEmpty(Model.Usuario.PhoneNumber))
+                        {
+                            <div class="info-row" style="margin-top:10px;">
+                                <span class="info-label">Registrado:</span>
+                                <span class="info-value">@Model.Usuario.PhoneNumber</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <p style="font-size:0.9rem; color:#666; margin-bottom:15px; margin-top:5px;">No tienes un número de teléfono registrado.</p>
+                            <form asp-controller="Account" asp-action="AgregarTelefono" method="post">
+                                <div class="form-group">
+                                    <input asp-for="NuevoTelefono" class="form-control" placeholder="Ej. +52 55 1234 5678" required />
+                                    <span asp-validation-for="NuevoTelefono" style="color:red; font-size:0.8rem;"></span>
+                                </div>
+                                <button type="submit" class="btn-filled btn-submit" style="width: auto;">Guardar Teléfono</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DER: Direcciones -->
+            <div>
+                <div class="card">
+                    <h3>Mis Direcciones</h3>
+                    @if (Model.Direcciones.Any())
+                    {
+                        @foreach (var dir in Model.Direcciones.OrderByDescending(d => d.EsPrincipal))
+                        {
+                            <div class="address-item">
+                                @if (dir.EsPrincipal)
+                                {
+                                    <span class="badge-main">Principal</span>
+                                }
+                                <h4>@dir.NombreContacto</h4>
+                                <p>@dir.DireccionCompleta<br />@dir.Ciudad</p>
+                                @if (!dir.EsPrincipal)
+                                {
+                                    <form asp-controller="Account" asp-action="EstablecerDireccionPrincipal" method="post" style="margin-top: 15px;">
+                                        <input type="hidden" name="id" value="@dir.Id" />
+                                        <button type="submit" class="btn-outline" style="padding: 0.4rem 1rem; font-size: 0.8rem;">Establecer como principal</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p style="color:#666; margin-bottom:20px;">No has agregado direcciones todavía.</p>
+                    }
+
+                    <div style="margin-top: 30px;">
+                        <h4 style="margin-bottom:15px; font-weight:600;">Agregar nueva dirección</h4>
+                        <form asp-controller="Account" asp-action="AgregarDireccion" method="post">
+                            <div class="form-group">
+                                <label asp-for="NuevaDireccion.NombreContacto" class="form-label">Recibe (Nombre)</label>
+                                <input asp-for="NuevaDireccion.NombreContacto" class="form-control" required />
+                                <span asp-validation-for="NuevaDireccion.NombreContacto" style="color:red; font-size:0.8rem;"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="NuevaDireccion.DireccionCompleta" class="form-label">Dirección Completa (Calle, Núm, CP)</label>
+                                <input asp-for="NuevaDireccion.DireccionCompleta" class="form-control" required />
+                                <span asp-validation-for="NuevaDireccion.DireccionCompleta" style="color:red; font-size:0.8rem;"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="NuevaDireccion.Ciudad" class="form-label">Ciudad / Estado</label>
+                                <input asp-for="NuevaDireccion.Ciudad" class="form-control" required />
+                                <span asp-validation-for="NuevaDireccion.Ciudad" style="color:red; font-size:0.8rem;"></span>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" asp-for="NuevaDireccion.EsPrincipal" id="esPrincipal" />
+                                <label for="esPrincipal" style="font-weight:500; font-size:0.95rem;">Hacer esta mi dirección principal</label>
+                            </div>
+
+                            <button type="submit" class="btn-filled">Guardar Dirección</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

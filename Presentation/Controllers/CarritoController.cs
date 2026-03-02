@@ -176,6 +176,12 @@ namespace Ecommerce.Presentacion.Controllers
             var metodosEnvio = await _context.MetodosEnvio.ToListAsync();
             ViewBag.MetodosEnvio = metodosEnvio;
 
+            var direcciones = await _context.Set<DireccionUsuario>()
+                .Where(d => d.UsuarioId == userId)
+                .OrderByDescending(d => d.EsPrincipal)
+                .ToListAsync();
+            ViewBag.Direcciones = direcciones;
+
             return View(vm);
         }
 

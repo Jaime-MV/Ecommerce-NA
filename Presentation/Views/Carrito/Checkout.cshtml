@@ -6,6 +6,9 @@
     ViewData["Title"] = "Finalizar compra";
     Layout = null;
     var metodosEnvio = ViewBag.MetodosEnvio as List<MetodoEnvio> ?? new List<MetodoEnvio>();
+    var direcciones = ViewBag.Direcciones as List<DireccionUsuario> ?? new List<DireccionUsuario>();
+    var direccionPrincipal = direcciones.FirstOrDefault(d => d.EsPrincipal) ?? direcciones.FirstOrDefault();
+    string direccionValorInicial = direccionPrincipal != null ? $"{direccionPrincipal.DireccionCompleta}, {direccionPrincipal.Ciudad}" : "";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -14,194 +17,213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Finalizar Compra — Ecommerce NA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --bg:#0a0a0b; --surface:#111113; --surface2:#161618;
-            --border:rgba(255,255,255,0.08); --gold:#c9a96e; --gold-dim:#8a6d3b;
-            --gold-pale:rgba(201,169,110,0.12); --text:#e8e3db; --muted:#6b6560;
-            --light:#a09890; --nav-h:70px; --success:#4caf7d; --danger:#e05a5a;
-        }
-        html { scroll-behavior:smooth; }
-        body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; }
-        body::before {
-            content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            --primary: #000000;
+            --secondary: #ffffff;
+            --accent: #ff6b00;
+            --surface: #f8f8f8;
+            --border: #e0e0e0;
+            --nav-h: 80px;
         }
 
-        nav {
-            position:fixed; top:0; left:0; right:0; z-index:100;
-            height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
-            padding:0 3.5rem; background:rgba(10,10,11,0.92); backdrop-filter:blur(20px);
-            border-bottom:1px solid var(--border);
-        }
-        .nav-brand { font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:300; letter-spacing:0.3em; text-transform:uppercase; color:var(--gold); text-decoration:none; }
-        .nav-back { font-size:0.78rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--light); text-decoration:none; display:flex; align-items:center; gap:0.5rem; transition:color 0.2s; }
-        .nav-back:hover { color:var(--gold); }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; font-family: 'Inter', sans-serif; }
+        body { background: var(--secondary); color: var(--primary); -webkit-font-smoothing: antialiased; }
 
-        /* CHECKOUT LAYOUT */
+        header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            height: var(--nav-h); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; text-transform: uppercase; letter-spacing: -0.02em; }
+        .nav-back { font-size: 0.95rem; font-weight: 500; color: #666; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+        .nav-back:hover { color: var(--accent); }
+
         .checkout-wrap {
-            position:relative; z-index:1;
-            display:grid; grid-template-columns:1fr 420px;
-            gap:0; padding-top:var(--nav-h);
-            min-height:100vh;
+            display: grid; grid-template-columns: 1fr 450px; min-height: 100vh; padding-top: var(--nav-h);
         }
 
-        /* LEFT: FORM */
-        .checkout-form-panel { padding:3.5rem; border-right:1px solid var(--border); }
-        .section-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:300; color:var(--text); margin-bottom:2rem; }
-        .section-sub-title { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:300; color:var(--text); margin:2rem 0 1.2rem; }
+        .checkout-form-panel { padding: 40px; }
+        .checkout-summary { padding: 40px; background: var(--surface); border-left: 1px solid var(--border); }
 
-        .form-group { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.2rem; }
-        .form-label { font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); }
+        .section-title { font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 30px; letter-spacing: -0.02em; }
+        .section-sub-title { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin: 30px 0 15px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.9rem; font-weight: 600; color: #444; margin-bottom: 8px; }
         .form-input {
-            width:100%; padding:0.8rem 1rem;
-            background:var(--surface2); border:1px solid var(--border);
-            color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.9rem;
-            border-radius:1px; outline:none;
-            transition:border-color 0.2s;
+            width: 100%; padding: 12px 15px; background: var(--secondary); border: 1px solid var(--border);
+            color: var(--primary); font-family: 'Inter', sans-serif; font-size: 1rem; border-radius: 8px; outline: none; transition: border-color 0.2s;
         }
-        .form-input:focus { border-color:var(--gold); }
-        .form-input::placeholder { color:var(--muted); }
+        .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,107,0,0.1); }
 
-        /* Métodos de envío */
-        .envio-options { display:flex; flex-direction:column; gap:0.8rem; }
-        .envio-option {
-            display:flex; align-items:center; gap:1rem;
-            padding:1rem 1.2rem;
-            background:var(--surface2); border:1px solid var(--border);
-            border-radius:1px; cursor:pointer;
-            transition:border-color 0.2s, background 0.2s;
+        /* Direcciones & Envio Options */
+        .option-list { display: flex; flex-direction: column; gap: 15px; }
+        .option-card {
+            display: flex; align-items: flex-start; gap: 1rem; padding: 15px; background: var(--secondary);
+            border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s;
         }
-        .envio-option:has(input:checked) { border-color:var(--gold); background:var(--gold-pale); }
-        .envio-option input[type="radio"] { accent-color:var(--gold); width:16px; height:16px; cursor:pointer; }
-        .envio-option-info { flex:1; }
-        .envio-option-name { font-size:0.9rem; color:var(--text); }
-        .envio-option-tiempo { font-size:0.78rem; color:var(--muted); margin-top:0.15rem; }
-        .envio-option-precio { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:300; color:var(--gold); }
+        .option-card:has(input:checked) { border-color: var(--primary); background: #fafafa; }
+        .option-card input[type="radio"] { margin-top: 4px; accent-color: var(--primary); width: 18px; height: 18px; cursor: pointer; }
+        .option-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .option-name { font-size: 1rem; font-weight: 600; color: var(--primary); }
+        .option-desc { font-size: 0.95rem; color: #666; }
+        .option-meta { font-size: 1.1rem; font-weight: 600; color: var(--primary); }
+
+        .address-actions { margin-top: 10px; display: none; }
+        .option-card:has(input:checked) .address-actions { display: block; }
+        .badge-primary { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-left: 10px; }
+        .btn-set-primary { padding: 6px 14px; background: transparent; border: 1px solid var(--primary); color: var(--primary); border-radius: 9999px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-set-primary:hover { background: var(--primary); color: var(--secondary); }
 
         .btn-confirm {
-            display:flex; align-items:center; justify-content:center; gap:0.7rem;
-            width:100%; padding:1.1rem;
-            background:var(--gold); color:var(--bg);
-            border:none; border-radius:1px;
-            font-family:'DM Sans',sans-serif;
-            font-size:0.85rem; font-weight:500; letter-spacing:0.2em; text-transform:uppercase;
-            cursor:pointer; margin-top:2rem;
-            transition:opacity 0.25s, transform 0.25s;
+            display: flex; align-items: center; justify-content: center; width: 100%; padding: 1.2rem;
+            background: var(--accent); color: var(--secondary); border: none; border-radius: 9999px; font-family: 'Inter', sans-serif;
+            font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 40px; transition: all 0.3s ease;
         }
-        .btn-confirm:hover { opacity:0.88; transform:translateY(-1px); }
+        .btn-confirm:hover { background: #e56000; transform: translateY(-2px); }
+        .btn-confirm:disabled { background: var(--border); color: #999; cursor: not-allowed; transform: none; }
 
-        /* RIGHT: SUMMARY */
-        .checkout-summary { padding:3.5rem 2.5rem; background:var(--surface); position:sticky; top:var(--nav-h); height:fit-content; }
-        .summary-title { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:300; color:var(--text); margin-bottom:1.5rem; }
-        .summary-items { display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem; }
-        .sum-item { display:flex; gap:1rem; align-items:center; }
-        .sum-item-img { width:52px; height:52px; object-fit:cover; border-radius:1px; background:#1a1810; flex-shrink:0; }
-        .sum-item-info { flex:1; }
-        .sum-item-name { font-size:0.85rem; color:var(--text); line-height:1.3; }
-        .sum-item-meta { font-size:0.75rem; color:var(--muted); margin-top:0.15rem; }
-        .sum-item-price { font-size:0.85rem; color:var(--gold); white-space:nowrap; }
-        .divider { height:1px; background:var(--border); margin:1rem 0; }
-        .sum-row { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.6rem; }
-        .sum-row .lbl { color:var(--muted); }
-        .sum-row .amt { color:var(--text); }
-        .sum-total { display:flex; justify-content:space-between; align-items:baseline; margin-top:0.5rem; padding-top:1rem; border-top:1px solid var(--border); }
-        .sum-total .lbl { font-size:0.82rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
-        .sum-total .amt { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; color:var(--gold); }
+        /* Summary Panel */
+        .summary-title { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 25px; }
+        .sum-item { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; }
+        .sum-item-img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
+        .sum-item-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .sum-item-name { font-size: 0.95rem; font-weight: 600; color: var(--primary); }
+        .sum-item-meta { font-size: 0.85rem; color: #666; }
+        .sum-item-price { font-size: 1rem; font-weight: 600; color: var(--primary); }
         
-        #total-display { transition:all 0.3s; }
+        .divider { height: 1px; background: var(--border); margin: 25px 0; }
+        .sum-row { display: flex; justify-content: space-between; font-size: 1rem; margin-bottom: 12px; color: #555; }
+        .sum-row .amt { font-weight: 600; color: var(--primary); }
+        .sum-total { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .sum-total .lbl { font-size: 1.1rem; font-weight: 600; color: var(--primary); }
+        .sum-total .amt { font-size: 2rem; font-weight: 700; color: var(--accent); }
 
-        /* Alerts */
-        .alert-box { padding:0.85rem 1.2rem; border-radius:2px; font-size:0.85rem; line-height:1.4; margin-bottom:1rem; }
-        .alert-box.error { background:rgba(224,90,90,0.1); border:1px solid rgba(224,90,90,0.3); color:var(--danger); }
+        .alert-box { padding: 1rem 1.5rem; border-radius: 8px; font-weight: 500; margin-bottom: 20px; }
+        .alert-box.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
 
-        @@media (max-width:900px) {
-            .checkout-wrap { grid-template-columns:1fr; }
-            .checkout-summary { position:static; border-top:1px solid var(--border); }
-            .checkout-form-panel, .checkout-summary { padding:2rem 1.5rem; }
-            nav { padding:0 1.5rem; }
+        @@media (max-width: 900px) {
+            .checkout-wrap { grid-template-columns: 1fr; }
+            .checkout-form-panel { padding: 40px 20px; }
+            .checkout-summary { padding: 40px 20px; border-left: none; border-top: 1px solid var(--border); order: -1; }
+            header { padding: 0 20px; }
         }
     </style>
 </head>
 <body>
 
-    <nav>
+    <header>
         <a href="/" class="nav-brand">Ecommerce NA</a>
-        <a asp-controller="Carrito" asp-action="Index" class="nav-back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Volver al carrito
-        </a>
-    </nav>
-
-    @if (TempData["Error"] != null)
-    {
-        <div style="position:relative;z-index:1;padding:1rem calc(var(--nav-h) + 1rem) 0 3.5rem">
-            <div class="alert-box error">✕ @TempData["Error"]</div>
-        </div>
-    }
+        <a asp-controller="Carrito" asp-action="Index" class="nav-back">Volver al carrito</a>
+    </header>
 
     <div class="checkout-wrap">
-
-        <!-- FORMULARIO -->
         <div class="checkout-form-panel">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert-box error">✕ @TempData["Error"]</div>
+            }
+
             <h1 class="section-title">Finalizar Compra</h1>
 
+            <!-- Seleccion de Direccion y Metodo de pago -->
             <form asp-controller="Carrito" asp-action="ConfirmarPedido" method="post" id="checkout-form">
                 @Html.AntiForgeryToken()
-
-                <!-- Dirección -->
+                
                 <div class="section-sub-title">Dirección de envío</div>
-                <div class="form-group">
-                    <label class="form-label" for="direccion">Dirección completa</label>
-                    <textarea class="form-input" name="direccion" id="direccion" rows="3" placeholder="Calle, número, colonia, ciudad, estado, CP..." required></textarea>
-                </div>
+                
+                @if (direcciones.Any())
+                {
+                    <div class="option-list">
+                        @foreach(var dir in direcciones)
+                        {
+                            var dirStr = $"{dir.DireccionCompleta}, {dir.Ciudad}";
+                            <label class="option-card">
+                                <input type="radio" name="direccionRadio" value="@dirStr" @(dir.EsPrincipal ? "checked" : "") onchange="document.getElementById('direccion').value = this.value; document.querySelectorAll('.address-actions').forEach(el=>el.style.display='none'); document.getElementById('actions-dir-@dir.Id').style.display='block';" />
+                                <div class="option-info">
+                                    <div class="option-name">
+                                        @dir.NombreContacto
+                                        @if(dir.EsPrincipal) { <span class="badge-primary">Principal</span> }
+                                    </div>
+                                    <div class="option-desc">@dirStr</div>
+                                    
+                                    <div class="address-actions" id="actions-dir-@dir.Id" style="@(dir.EsPrincipal ? "display:block;" : "display:none;")">
+                                        @if(!dir.EsPrincipal)
+                                        {
+                                            <!-- Boton que hace post independiente sin enviar el checkout previniendo default en form -->
+                                            <button type="submit" form="form-set-primary-@dir.Id" class="btn-set-primary">Definir como principal</button>
+                                        }
+                                        else 
+                                        {
+                                            <span style="font-size:0.85rem;color:#666;">Se utilizará esta dirección.</span>
+                                        }
+                                    </div>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                    <input type="hidden" name="direccion" id="direccion" value="@direccionValorInicial" />
+                }
+                else
+                {
+                    <div class="form-group">
+                        <label class="form-label" for="direccion">Dirección completa</label>
+                        <textarea class="form-input" name="direccion" id="direccion" rows="3" placeholder="Calle, número, colonia, ciudad, estado, CP..." required></textarea>
+                    </div>
+                }
 
-                <!-- Método de envío -->
                 <div class="section-sub-title">Método de envío</div>
                 @if (metodosEnvio.Any())
                 {
-                    <div class="envio-options">
+                    <div class="option-list">
                         @foreach (var metodo in metodosEnvio)
                         {
-                            <label class="envio-option">
+                            <label class="option-card">
                                 <input type="radio" name="metodoEnvioId" value="@metodo.Id"
                                        data-costo="@metodo.Costo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
                                        onchange="actualizarTotal(this)"
                                        @(metodosEnvio.IndexOf(metodo) == 0 ? "checked" : "") />
-                                <div class="envio-option-info">
-                                    <div class="envio-option-name">@metodo.Nombre</div>
+                                <div class="option-info">
+                                    <div class="option-name">@metodo.Nombre</div>
                                     @if (!string.IsNullOrEmpty(metodo.TiempoEstimado))
                                     {
-                                        <div class="envio-option-tiempo">@metodo.TiempoEstimado</div>
+                                        <div class="option-desc">@metodo.TiempoEstimado</div>
                                     }
                                 </div>
-                                <div class="envio-option-precio">$@metodo.Costo.ToString("N2")</div>
+                                <div class="option-meta">$@metodo.Costo.ToString("N2")</div>
                             </label>
                         }
                     </div>
                 }
                 else
                 {
-                    <p style="font-size:0.85rem;color:var(--muted)">No hay métodos de envío disponibles. Contacta al administrador.</p>
+                    <p style="font-size:0.95rem;color:#666">No hay métodos de envío disponibles.</p>
                     <input type="hidden" name="metodoEnvioId" value="0" />
                 }
 
                 <button type="submit" class="btn-confirm" @(metodosEnvio.Any() ? "" : "disabled")>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Confirmar pedido
+                    Confirmar y Pagar
                 </button>
             </form>
+
+            <!-- Formularios ocultos para redefinir principal -->
+            @foreach(var dir in direcciones.Where(d => !d.EsPrincipal))
+            {
+                <form asp-controller="Account" asp-action="EstablecerDireccionPrincipal" method="post" id="form-set-primary-@dir.Id">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@dir.Id" />
+                    <input type="hidden" name="returnUrl" value="/Carrito/Checkout" />
+                </form>
+            }
+
         </div>
 
-        <!-- RESUMEN -->
         <div class="checkout-summary">
-            <div class="summary-title">Resumen</div>
+            <h2 class="summary-title">Resumen de Compra</h2>
             <div class="summary-items">
                 @foreach (var item in Model.Items)
                 {
@@ -209,19 +231,20 @@
                         ? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop"
                         : item.ImagenUrl;
                     <div class="sum-item">
-                        <img class="sum-item-img" src="@imgSrc" alt="@item.ProductoNombre"
-                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop';" />
+                        <img class="sum-item-img" src="@imgSrc" alt="@item.ProductoNombre" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop';" />
                         <div class="sum-item-info">
                             <div class="sum-item-name">@item.ProductoNombre</div>
-                            <div class="sum-item-meta">T: @item.Talla @(item.Color != null && item.Color != "Único" ? "| " + item.Color : "") × @item.Cantidad</div>
+                            <div class="sum-item-meta">Talla @item.Talla @(item.Color != null && item.Color != "Único" ? "| " + item.Color : "") × @item.Cantidad</div>
                         </div>
                         <div class="sum-item-price">$@item.Subtotal.ToString("N2")</div>
                     </div>
                 }
             </div>
+            
             <div class="divider"></div>
-            <div class="sum-row"><span class="lbl">Subtotal</span><span class="amt">$@Model.Subtotal.ToString("N2")</span></div>
-            <div class="sum-row"><span class="lbl">Envío</span><span class="amt" id="envio-display">
+            
+            <div class="sum-row"><span>Subtotal</span><span class="amt">$@Model.Subtotal.ToString("N2")</span></div>
+            <div class="sum-row"><span>Costo de Envío</span><span class="amt" id="envio-display">
                 @if (metodosEnvio.Any())
                 {
                     @:$@metodosEnvio[0].Costo.ToString("N2")
@@ -231,6 +254,7 @@
                     @:—
                 }
             </span></div>
+            
             <div class="sum-total">
                 <span class="lbl">Total</span>
                 <span class="amt" id="total-display">
@@ -245,7 +269,6 @@
                 </span>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -258,9 +281,15 @@
             document.getElementById('total-display').textContent = '$' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // Inicializar con el primer método seleccionado
         const firstRadio = document.querySelector('input[name="metodoEnvioId"]:checked');
         if (firstRadio) actualizarTotal(firstRadio);
+
+        // Previne enter form dev
+        document.getElementById('checkout-form').addEventListener('keydown', function(event) {
+            if(event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>

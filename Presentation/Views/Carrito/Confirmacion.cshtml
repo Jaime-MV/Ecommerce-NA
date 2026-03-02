@@ -10,103 +10,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pedido Confirmado — Ecommerce NA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --bg:#0a0a0b; --surface:#111113; --border:rgba(255,255,255,0.08);
-            --gold:#c9a96e; --gold-dim:#8a6d3b; --gold-pale:rgba(201,169,110,0.12);
-            --text:#e8e3db; --muted:#6b6560; --light:#a09890;
-            --success:#4caf7d; --nav-h:70px;
-        }
-        body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
-        body::before {
-            content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            --primary: #000000;
+            --secondary: #ffffff;
+            --accent: #ff6b00;
+            --surface: #f8f8f8;
+            --border: #e0e0e0;
+            --success: #2e7d32;
+            --nav-h: 80px;
         }
 
-        nav {
-            position:fixed; top:0; left:0; right:0; z-index:100;
-            height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
-            padding:0 3.5rem; background:rgba(10,10,11,0.92); backdrop-filter:blur(20px);
-            border-bottom:1px solid var(--border);
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; font-family: 'Inter', sans-serif; }
+        body { background: var(--surface); color: var(--primary); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+        header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            height: var(--nav-h); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .nav-brand { font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:300; letter-spacing:0.3em; text-transform:uppercase; color:var(--gold); text-decoration:none; }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; text-transform: uppercase; letter-spacing: -0.02em; }
 
         .confirm-page {
-            position:relative; z-index:1;
-            flex:1; display:flex; align-items:center; justify-content:center;
-            padding:calc(var(--nav-h) + 3rem) 2rem 4rem;
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            padding: calc(var(--nav-h) + 40px) 20px 80px;
         }
 
         .confirm-card {
-            background:var(--surface); border:1px solid var(--border);
-            border-radius:2px; padding:4rem;
-            max-width:560px; width:100%; text-align:center;
-            animation: popIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+            background: var(--secondary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 60px 40px;
+            max-width: 600px; width: 100%; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            animation: popIn 0.5s ease both;
         }
 
         .check-circle {
-            width:72px; height:72px; border-radius:50%;
-            background:rgba(76,175,125,0.1); border:2px solid var(--success);
-            display:flex; align-items:center; justify-content:center;
-            margin:0 auto 2rem;
-            animation: scaleIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.2s both;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: #e8f5e9; border: 2px solid #c8e6c9;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.5s ease 0.2s both;
         }
-        .check-circle svg { color:var(--success); }
+        .check-circle svg { color: var(--success); }
 
-        .confirm-eyebrow { font-size:0.7rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--success); margin-bottom:0.8rem; }
-        .confirm-title { font-family:'Cormorant Garamond',serif; font-size:2.4rem; font-weight:300; color:var(--text); margin-bottom:0.8rem; }
-        .confirm-sub { font-size:0.9rem; color:var(--muted); line-height:1.6; margin-bottom:2.5rem; }
+        .confirm-eyebrow { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: var(--success); margin-bottom: 10px; letter-spacing: 0.05em; }
+        .confirm-title { font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; letter-spacing: -0.02em; }
+        .confirm-sub { font-size: 1.05rem; color: #555; line-height: 1.6; margin-bottom: 40px; }
 
-        .pedido-info { background:rgba(201,169,110,0.05); border:1px solid rgba(201,169,110,0.15); border-radius:2px; padding:1.5rem; margin-bottom:2rem; }
-        .info-row { display:flex; justify-content:space-between; padding:0.55rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; }
-        .info-row:last-child { border-bottom:none; }
-        .info-row .lbl { color:var(--muted); }
-        .info-row .val { color:var(--text); }
-        .info-row .val.gold { color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:300; }
+        .pedido-info { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 25px; margin-bottom: 40px; text-align: left; }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-row:first-child { padding-top: 0; }
+        .info-row .lbl { color: #666; font-weight: 500; }
+        .info-row .val { color: var(--primary); font-weight: 600; text-align: right; }
+        .info-row .val.accent { color: var(--accent); font-size: 1.1rem; font-weight: 700; }
 
         .btn-home {
-            display:inline-flex; align-items:center; gap:0.6rem;
-            padding:0.9rem 2.4rem;
-            background:var(--gold); color:var(--bg);
-            font-size:0.78rem; font-weight:500; letter-spacing:0.18em; text-transform:uppercase;
-            text-decoration:none; border-radius:1px;
-            transition:opacity 0.25s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+            padding: 1rem 2.5rem;
+            background: var(--primary); color: var(--secondary);
+            font-size: 1rem; font-weight: 600; text-decoration: none; border-radius: 9999px;
+            transition: all 0.3s;
         }
-        .btn-home:hover { opacity:0.88; }
+        .btn-home:hover { background: #333; transform: translateY(-2px); }
 
         @@keyframes popIn {
-            from { opacity:0; transform:scale(0.95) translateY(20px); }
-            to   { opacity:1; transform:scale(1) translateY(0); }
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
         }
         @@keyframes scaleIn {
-            from { transform:scale(0); opacity:0; }
-            to   { transform:scale(1); opacity:1; }
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
         }
 
-        @@media (max-width:600px) {
-            .confirm-card { padding:2.5rem 1.5rem; }
-            nav { padding:0 1.5rem; }
+        @@media (max-width: 600px) {
+            .confirm-card { padding: 40px 20px; border: none; box-shadow: none; background: transparent; }
+            header { padding: 0 20px; }
+            .pedido-info { padding: 20px 15px; }
+            .info-row { flex-direction: column; gap: 5px; align-items: flex-start; }
+            .info-row .val { text-align: left; }
         }
     </style>
 </head>
 <body>
-    <nav>
+    <header>
         <a href="/" class="nav-brand">Ecommerce NA</a>
-    </nav>
+    </header>
 
     <div class="confirm-page">
         <div class="confirm-card">
             <div class="check-circle">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="20 6 9 17 4 12"/>
                 </svg>
             </div>
 
             <div class="confirm-eyebrow">Pedido recibido</div>
             <h1 class="confirm-title">¡Gracias por tu compra!</h1>
-            <p class="confirm-sub">Tu pedido ha sido procesado exitosamente. Recibirás actualizaciones sobre el estado de tu envío.</p>
+            <p class="confirm-sub">Tu pedido ha sido procesado exitosamente. Recibirás actualizaciones sobre el estado de tu envío por correo.</p>
 
             <div class="pedido-info">
                 <div class="info-row">
@@ -115,35 +119,31 @@
                 </div>
                 <div class="info-row">
                     <span class="lbl">Fecha</span>
-                    <span class="val">@Model.FechaPedido.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span class="val">@Model.FechaPedido.ToString("dd MMM yyyy HH:mm")</span>
                 </div>
                 <div class="info-row">
                     <span class="lbl">Método de envío</span>
-                    <span class="val">@(Model.MetodoEnvio?.Nombre ?? "—")</span>
+                    <span class="val">@(Model.MetodoEnvio?.Nombre ?? "Estándar")</span>
                 </div>
                 <div class="info-row">
                     <span class="lbl">Total pagado</span>
-                    <span class="val gold">$@Model.Total.ToString("N2")</span>
+                    <span class="val accent">$@Model.Total.ToString("N2")</span>
                 </div>
                 <div class="info-row">
                     <span class="lbl">Estado</span>
-                    <span class="val" style="color:var(--success)">✓ Creado</span>
+                    <span class="val" style="color:var(--success)">✓ Procesando</span>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.DireccionEnvioSnapshot))
                 {
                     <div class="info-row">
-                        <span class="lbl">Dirección</span>
-                        <span class="val" style="max-width:220px;text-align:right;line-height:1.4">@Model.DireccionEnvioSnapshot</span>
+                        <span class="lbl">Dirección de envío</span>
+                        <span class="val" style="max-width: 250px; line-height: 1.4;">@Model.DireccionEnvioSnapshot</span>
                     </div>
                 }
             </div>
 
             <a href="/" class="btn-home">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                Volver al inicio
+                Ir a inicio
             </a>
         </div>
     </div>
